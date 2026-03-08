@@ -1,27 +1,56 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
-const queryClient = new QueryClient();
+// Public pages
+import Home from "@/pages/public/Home";
+import Shop from "@/pages/public/Shop";
+import Login from "@/pages/public/Login";
+import Register from "@/pages/public/Register";
+import Cart from "@/pages/public/Cart";
+import Checkout from "@/pages/public/Checkout";
+
+// User pages (authenticated)
+import Profile from "@/pages/user/Profile";
+import OrderTracking from "@/pages/user/OrderTracking";
+import OrderHistory from "@/pages/user/OrderHistory";
+import Wishlist from "@/pages/user/Wishlist";
+
+// Admin pages (admin only)
+import AdminDashboard from "@/pages/admin/AdminDashboard";
+import ProductManagement from "@/pages/admin/ProductManagement";
+import CategoryManagement from "@/pages/admin/CategoryManagement";
+import UserManagement from "@/pages/admin/UserManagement";
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <AuthProvider>
+    <BrowserRouter>
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<Home />} />
+        <Route path="/shop" element={<Shop />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/cart" element={<Cart />} />
+        <Route path="/checkout" element={<Checkout />} />
+
+        {/* Authenticated User Routes */}
+        <Route path="/user/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/user/orders" element={<ProtectedRoute><OrderHistory /></ProtectedRoute>} />
+        <Route path="/user/track-order" element={<ProtectedRoute><OrderTracking /></ProtectedRoute>} />
+        <Route path="/user/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
+
+        {/* Admin Routes (requireAdmin) */}
+        <Route path="/admin/dashboard" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
+        <Route path="/admin/products" element={<ProtectedRoute requireAdmin><ProductManagement /></ProtectedRoute>} />
+        <Route path="/admin/categories" element={<ProtectedRoute requireAdmin><CategoryManagement /></ProtectedRoute>} />
+        <Route path="/admin/users" element={<ProtectedRoute requireAdmin><UserManagement /></ProtectedRoute>} />
+
+        {/* Catch-all */}
+        <Route path="*" element={<Home />} />
+      </Routes>
+    </BrowserRouter>
+  </AuthProvider>
 );
 
 export default App;
