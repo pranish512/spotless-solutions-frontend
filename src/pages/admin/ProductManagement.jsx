@@ -1,23 +1,97 @@
 import { useState } from "react";
 import AdminSidebar from "@/components/AdminSidebar";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import ToggleSwitch from "@/components/ToggleSwitch";
+import { Plus, Pencil, Trash2, Search, X, Upload } from "lucide-react";
 
 // TODO: API INTEGRATION -> GET /api/admin/products?page=1&search= => { products[], totalPages }
-const mockProducts = [
-  { id: "1", name: "Premium Multi-Surface Cleaner 500ml", category: "Cleaning Liquids", price: 249, stock: 150, status: "Active" },
-  { id: "2", name: "Heavy Duty Rubber Gloves", category: "Gloves", price: 149, stock: 300, status: "Active" },
-  { id: "3", name: "N95 Protective Mask – Pack of 10", category: "Masks & Safety", price: 399, stock: 0, status: "Out of Stock" },
-  { id: "4", name: "Complete Car Cleaning Kit", category: "Car Cleaning", price: 899, stock: 45, status: "Active" },
-  { id: "5", name: "Microfiber Mop with Handle", category: "Cleaning Tools", price: 599, stock: 80, status: "Active" },
+const initialProducts = [
+  { id: "1", name: "Premium Multi-Surface Cleaner 500ml", category: "Cleaning Liquids", sellingPrice: 249, quantity: 150, active: true },
+  { id: "2", name: "Heavy Duty Rubber Gloves", category: "Gloves", sellingPrice: 149, quantity: 300, active: true },
+  { id: "3", name: "N95 Protective Mask – Pack of 10", category: "Masks & Safety", sellingPrice: 399, quantity: 0, active: false },
+  { id: "4", name: "Complete Car Cleaning Kit", category: "Car Cleaning", sellingPrice: 899, quantity: 45, active: true },
+  { id: "5", name: "Microfiber Mop with Handle", category: "Cleaning Tools", sellingPrice: 599, quantity: 80, active: true },
 ];
 
-const ProductManagement = () => {
-  const [search, setSearch] = useState("");
-  const [showAddModal, setShowAddModal] = useState(false);
+// TODO: API INTEGRATION -> GET /api/admin/categories
+const categoryOptions = ["Cleaning Liquids", "Gloves", "Masks & Safety", "Car Cleaning", "Cleaning Tools", "Kitchen Care"];
+// TODO: API INTEGRATION -> GET /api/admin/tags
+const tagOptions = ["Eco-Friendly", "Best Seller", "New Arrival", "On Sale"];
+const sizeOptions = ["S", "M", "L"];
+const volumeOptions = ["500ml", "1L", "5L"];
+const productTypes = ["Simple", "Variable size", "Bundle"];
 
-  const filtered = mockProducts.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase())
-  );
+const emptyForm = {
+  name: "",
+  description: "",
+  highlights: "",
+  tags: [],
+  size: "M",
+  volume: "500ml",
+  sku: "",
+  image: "",
+  videoDemo: "",
+  quantity: 0,
+  category: categoryOptions[0],
+  actualPrice: 0,
+  sellingPrice: 0,
+  discount: 0,
+  barcode: "",
+  manufacturer: "",
+  hsn: "",
+  productType: "Simple",
+};
+
+const ProductManagement = () => {
+  const [products, setProducts] = useState(initialProducts);
+  const [search, setSearch] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [form, setForm] = useState(emptyForm);
+
+  const filtered = products.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
+
+  const toggleActive = (id) => {
+    // TODO: API INTEGRATION -> PATCH /api/admin/products/{id}/status { active } => { product }
+    setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, active: !p.active } : p)));
+  };
+
+  const toggleTag = (tag) => {
+    setForm((f) => ({
+      ...f,
+      tags: f.tags.includes(tag) ? f.tags.filter((t) => t !== tag) : [...f.tags, tag],
+    }));
+  };
+
+  const handleImage = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // TODO: API INTEGRATION -> POST /api/admin/products/upload-image (multipart) => { url }
+    setForm((f) => ({ ...f, image: URL.createObjectURL(file) }));
+  };
+
+  const handleVideo = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // TODO: API INTEGRATION -> POST /api/admin/products/upload-video (multipart) => { url }
+    setForm((f) => ({ ...f, videoDemo: URL.createObjectURL(file) }));
+  };
+
+  const handleSave = (e) => {
+    e.preventDefault();
+    // TODO: API INTEGRATION -> POST /api/admin/products { ...form } => { product }
+    setProducts((prev) => [
+      ...prev,
+      {
+        id: String(Date.now()),
+        name: form.name,
+        category: form.category,
+        sellingPrice: Number(form.sellingPrice),
+        quantity: Number(form.quantity),
+        active: true,
+      },
+    ]);
+    setForm(emptyForm);
+    setShowModal(false);
+  };
 
   return (
     <div className="flex min-h-screen">
@@ -26,15 +100,13 @@ const ProductManagement = () => {
         <div className="flex items-center justify-between mb-8">
           <h2 className="font-display font-bold text-2xl text-foreground">Product Management</h2>
           <button
-            onClick={() => setShowAddModal(true)}
+            onClick={() => setShowModal(true)}
             className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm hover:opacity-90 transition-opacity"
           >
-            <Plus className="w-4 h-4" />
-            Add Product
+            <Plus className="w-4 h-4" /> Add Product
           </button>
         </div>
 
-        {/* Search */}
         <div className="relative max-w-sm mb-6">
           <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
           <input
@@ -46,7 +118,6 @@ const ProductManagement = () => {
           />
         </div>
 
-        {/* Table */}
         <div className="bg-card rounded-lg shadow-card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -55,7 +126,7 @@ const ProductManagement = () => {
                   <th className="text-left px-4 py-3 text-sm font-medium text-foreground">Product</th>
                   <th className="text-left px-4 py-3 text-sm font-medium text-foreground">Category</th>
                   <th className="text-left px-4 py-3 text-sm font-medium text-foreground">Price</th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-foreground">Stock</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-foreground">Quantity</th>
                   <th className="text-left px-4 py-3 text-sm font-medium text-foreground">Status</th>
                   <th className="text-right px-4 py-3 text-sm font-medium text-foreground">Actions</th>
                 </tr>
@@ -65,16 +136,15 @@ const ProductManagement = () => {
                   <tr key={product.id} className="border-t border-border hover:bg-muted/50 transition-colors">
                     <td className="px-4 py-3 text-sm font-medium text-foreground">{product.name}</td>
                     <td className="px-4 py-3 text-sm text-muted-foreground">{product.category}</td>
-                    <td className="px-4 py-3 text-sm font-medium text-foreground">₹{product.price}</td>
-                    <td className="px-4 py-3 text-sm text-foreground">{product.stock}</td>
+                    <td className="px-4 py-3 text-sm font-medium text-foreground">₹{product.sellingPrice}</td>
+                    <td className="px-4 py-3 text-sm text-foreground">{product.quantity}</td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-1 text-xs font-semibold rounded-md ${
-                        product.status === "Active"
-                          ? "bg-accent text-accent-foreground"
-                          : "bg-destructive/10 text-destructive"
-                      }`}>
-                        {product.status}
-                      </span>
+                      <ToggleSwitch
+                        checked={product.active}
+                        onChange={() => toggleActive(product.id)}
+                        labelOn="Active"
+                        labelOff="Deactive"
+                      />
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
@@ -95,47 +165,168 @@ const ProductManagement = () => {
           </div>
         </div>
 
-        {/* Add Product Modal */}
-        {showAddModal && (
-          <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-            <div className="bg-card rounded-xl shadow-modal w-full max-w-lg mx-4 p-8 animate-fade-in" onClick={(e) => e.stopPropagation()}>
-              <h3 className="font-display font-bold text-xl text-foreground mb-6">Add New Product</h3>
-              {/* TODO: API INTEGRATION -> POST /api/admin/products { name, category, price, stock, description, images } => { product } */}
-              <form className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Product Name *</label>
-                  <input className="w-full h-11 px-4 rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring font-body" placeholder="Enter product name" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
+        {showModal && (
+          <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 overflow-y-auto" onClick={() => setShowModal(false)}>
+            <div className="bg-card rounded-xl shadow-modal w-full max-w-4xl p-8 my-8 animate-fade-in" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="font-display font-bold text-xl text-foreground">Add / Edit Product</h3>
+                <button onClick={() => setShowModal(false)} className="p-1 rounded-md hover:bg-muted">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form className="space-y-5" onSubmit={handleSave}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-foreground mb-1">Name *</label>
+                    <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
+                      className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-foreground mb-1">Description</label>
+                    <textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
+                      className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body resize-none" />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-foreground mb-1">Product Highlights</label>
+                    <textarea rows={2} value={form.highlights} onChange={(e) => setForm({ ...form, highlights: e.target.value })}
+                      placeholder="One highlight per line"
+                      className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body resize-none" />
+                  </div>
+
+                  {/* Tags */}
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-foreground mb-1">Tags</label>
+                    <div className="flex flex-wrap gap-2">
+                      {tagOptions.map((t) => {
+                        const active = form.tags.includes(t);
+                        return (
+                          <button
+                            type="button"
+                            key={t}
+                            onClick={() => toggleTag(t)}
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                              active
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "bg-background text-foreground border-border hover:bg-muted"
+                            }`}
+                          >
+                            {t}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Variants / Units */}
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Category *</label>
-                    <select className="w-full h-11 px-4 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring font-body">
-                      <option>Cleaning Liquids</option>
-                      <option>Gloves</option>
-                      <option>Masks & Safety</option>
-                      <option>Car Cleaning</option>
-                      <option>Cleaning Tools</option>
-                      <option>Kitchen Care</option>
+                    <label className="block text-sm font-medium text-foreground mb-1">Size</label>
+                    <select value={form.size} onChange={(e) => setForm({ ...form, size: e.target.value })}
+                      className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body">
+                      {sizeOptions.map((o) => <option key={o}>{o}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Price (₹) *</label>
-                    <input type="number" className="w-full h-11 px-4 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring font-body" placeholder="0" />
+                    <label className="block text-sm font-medium text-foreground mb-1">Volume</label>
+                    <select value={form.volume} onChange={(e) => setForm({ ...form, volume: e.target.value })}
+                      className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body">
+                      {volumeOptions.map((o) => <option key={o}>{o}</option>)}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">Product Code (SKU) *</label>
+                    <input required value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })}
+                      className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">Product Category *</label>
+                    <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}
+                      className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body">
+                      {categoryOptions.map((c) => <option key={c}>{c}</option>)}
+                    </select>
+                  </div>
+
+                  {/* Image */}
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">Product Image</label>
+                    <div className="flex items-center gap-3">
+                      <div className="w-16 h-16 rounded-lg bg-muted overflow-hidden flex items-center justify-center">
+                        {form.image ? (
+                          <img src={form.image} alt="Product" className="w-full h-full object-cover" />
+                        ) : (
+                          <Upload className="w-5 h-5 text-muted-foreground" />
+                        )}
+                      </div>
+                      <input type="file" accept="image/*" onChange={handleImage} className="text-sm" />
+                    </div>
+                  </div>
+                  {/* Video Demo */}
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">Video Demo (upload or link)</label>
+                    <input type="file" accept="video/*" onChange={handleVideo} className="text-sm mb-1 block" />
+                    <input
+                      value={typeof form.videoDemo === "string" && form.videoDemo.startsWith("blob:") ? "" : form.videoDemo}
+                      onChange={(e) => setForm({ ...form, videoDemo: e.target.value })}
+                      placeholder="Or paste video URL"
+                      className="w-full h-9 px-3 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">Available Quantity *</label>
+                    <input required type="number" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })}
+                      className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">Product Type *</label>
+                    <select value={form.productType} onChange={(e) => setForm({ ...form, productType: e.target.value })}
+                      className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body">
+                      {productTypes.map((p) => <option key={p}>{p}</option>)}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">Actual Price (₹) *</label>
+                    <input required type="number" value={form.actualPrice} onChange={(e) => setForm({ ...form, actualPrice: e.target.value })}
+                      className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">Selling Price (₹) *</label>
+                    <input required type="number" value={form.sellingPrice} onChange={(e) => setForm({ ...form, sellingPrice: e.target.value })}
+                      className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">Discount (%)</label>
+                    <input type="number" value={form.discount} onChange={(e) => setForm({ ...form, discount: e.target.value })}
+                      className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">Barcode</label>
+                    <input value={form.barcode} onChange={(e) => setForm({ ...form, barcode: e.target.value })}
+                      className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">Manufacturer</label>
+                    <input value={form.manufacturer} onChange={(e) => setForm({ ...form, manufacturer: e.target.value })}
+                      className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">HSN / SAC</label>
+                    <input value={form.hsn} onChange={(e) => setForm({ ...form, hsn: e.target.value })}
+                      className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
                   </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Stock Quantity *</label>
-                  <input type="number" className="w-full h-11 px-4 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring font-body" placeholder="0" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Description</label>
-                  <textarea rows={3} className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring font-body resize-none" placeholder="Product description..." />
-                </div>
+
                 <div className="flex gap-3 pt-2">
-                  <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 h-11 rounded-lg border border-border text-foreground font-display font-bold text-sm hover:bg-muted transition-colors">
+                  <button type="button" onClick={() => setShowModal(false)}
+                    className="flex-1 h-11 rounded-lg border border-border text-foreground font-display font-bold text-sm hover:bg-muted transition-colors">
                     Cancel
                   </button>
-                  <button type="submit" className="flex-1 h-11 rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm hover:opacity-90 transition-opacity">
+                  <button type="submit"
+                    className="flex-1 h-11 rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm hover:opacity-90 transition-opacity">
                     Save Product
                   </button>
                 </div>
