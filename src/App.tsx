@@ -21,6 +21,9 @@ import AdminDashboard from "@/pages/admin/AdminDashboard";
 import ProductManagement from "@/pages/admin/ProductManagement";
 import CategoryManagement from "@/pages/admin/CategoryManagement";
 import UserManagement from "@/pages/admin/UserManagement";
+import StaffManagement from "@/pages/admin/StaffManagement";
+import TagsManagement from "@/pages/admin/TagsManagement";
+import UserTypeManagement from "@/pages/admin/UserTypeManagement";
 
 const App = () => (
   <AuthProvider>
@@ -45,6 +48,9 @@ const App = () => (
         <Route path="/admin/products" element={<ProtectedRoute requireAdmin><ProductManagement /></ProtectedRoute>} />
         <Route path="/admin/categories" element={<ProtectedRoute requireAdmin><CategoryManagement /></ProtectedRoute>} />
         <Route path="/admin/users" element={<ProtectedRoute requireAdmin><UserManagement /></ProtectedRoute>} />
+        <Route path="/admin/staff" element={<ProtectedRoute requireAdmin><StaffManagement /></ProtectedRoute>} />
+        <Route path="/admin/tags" element={<ProtectedRoute requireAdmin><TagsManagement /></ProtectedRoute>} />
+        <Route path="/admin/user-types" element={<ProtectedRoute requireAdmin><UserTypeManagement /></ProtectedRoute>} />
 
         {/* Catch-all */}
         <Route path="*" element={<Home />} />
