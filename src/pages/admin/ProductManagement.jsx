@@ -1,15 +1,23 @@
 import { useState } from "react";
 import AdminSidebar from "@/components/AdminSidebar";
 import ToggleSwitch from "@/components/ToggleSwitch";
-import { Plus, Pencil, Trash2, Search, X, Upload } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, X, Upload, Eye, Star } from "lucide-react";
 
 // TODO: API INTEGRATION -> GET /api/admin/products?page=1&search= => { products[], totalPages }
 const initialProducts = [
-  { id: "1", name: "Premium Multi-Surface Cleaner 500ml", category: "Cleaning Liquids", sellingPrice: 249, quantity: 150, active: true },
-  { id: "2", name: "Heavy Duty Rubber Gloves", category: "Gloves", sellingPrice: 149, quantity: 300, active: true },
-  { id: "3", name: "N95 Protective Mask – Pack of 10", category: "Masks & Safety", sellingPrice: 399, quantity: 0, active: false },
-  { id: "4", name: "Complete Car Cleaning Kit", category: "Car Cleaning", sellingPrice: 899, quantity: 45, active: true },
-  { id: "5", name: "Microfiber Mop with Handle", category: "Cleaning Tools", sellingPrice: 599, quantity: 80, active: true },
+  { id: "1", name: "Premium Multi-Surface Cleaner 500ml", category: "Cleaning Liquids", sellingPrice: 249, quantity: 150, active: true, avgRating: 4.5 },
+  { id: "2", name: "Heavy Duty Rubber Gloves", category: "Gloves", sellingPrice: 149, quantity: 300, active: true, avgRating: 4.2 },
+  { id: "3", name: "N95 Protective Mask – Pack of 10", category: "Masks & Safety", sellingPrice: 399, quantity: 0, active: false, avgRating: 4.8 },
+  { id: "4", name: "Complete Car Cleaning Kit", category: "Car Cleaning", sellingPrice: 899, quantity: 45, active: true, avgRating: 4.6 },
+  { id: "5", name: "Microfiber Mop with Handle", category: "Cleaning Tools", sellingPrice: 599, quantity: 80, active: true, avgRating: 4.0 },
+];
+
+// TODO: API INTEGRATION -> GET /api/admin/products/{id}/ratings => { avgRating, total, reviews: [{ id, user, rating, comment, date }] }
+const sampleReviews = [
+  { id: "r1", user: "Anita S.", rating: 5, comment: "Excellent quality, leaves surfaces shining.", date: "2026-04-12" },
+  { id: "r2", user: "Rohit K.", rating: 4, comment: "Good product, value for money.", date: "2026-04-08" },
+  { id: "r3", user: "Meera P.", rating: 5, comment: "Highly recommend, lasts a long time.", date: "2026-04-02" },
+  { id: "r4", user: "Vikas D.", rating: 3, comment: "Average. Smell could be better.", date: "2026-03-28" },
 ];
 
 // TODO: API INTEGRATION -> GET /api/admin/categories
@@ -39,6 +47,8 @@ const emptyForm = {
   manufacturer: "",
   hsn: "",
   productType: "Simple",
+  enableRating: true,
+  showRating: true,
 };
 
 const ProductManagement = () => {
@@ -46,6 +56,7 @@ const ProductManagement = () => {
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [previewProduct, setPreviewProduct] = useState(null);
 
   const filtered = products.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
 
@@ -127,6 +138,7 @@ const ProductManagement = () => {
                   <th className="text-left px-4 py-3 text-sm font-medium text-foreground">Category</th>
                   <th className="text-left px-4 py-3 text-sm font-medium text-foreground">Price</th>
                   <th className="text-left px-4 py-3 text-sm font-medium text-foreground">Quantity</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-foreground">Avg Rating</th>
                   <th className="text-left px-4 py-3 text-sm font-medium text-foreground">Status</th>
                   <th className="text-right px-4 py-3 text-sm font-medium text-foreground">Actions</th>
                 </tr>
@@ -138,6 +150,12 @@ const ProductManagement = () => {
                     <td className="px-4 py-3 text-sm text-muted-foreground">{product.category}</td>
                     <td className="px-4 py-3 text-sm font-medium text-foreground">₹{product.sellingPrice}</td>
                     <td className="px-4 py-3 text-sm text-foreground">{product.quantity}</td>
+                    <td className="px-4 py-3 text-sm text-foreground">
+                      <span className="inline-flex items-center gap-1">
+                        <Star className="w-4 h-4 fill-secondary text-secondary" />
+                        <span className="font-medium">{(product.avgRating ?? 0).toFixed(1)}</span>
+                      </span>
+                    </td>
                     <td className="px-4 py-3">
                       <ToggleSwitch
                         checked={product.active}
@@ -148,6 +166,14 @@ const ProductManagement = () => {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
+                        {/* TODO: API INTEGRATION -> GET /api/admin/products/{id} => { product } (for popup) */}
+                        <button
+                          onClick={() => setPreviewProduct(product)}
+                          className="p-2 rounded-md hover:bg-muted text-foreground transition-colors"
+                          aria-label="View"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
                         {/* TODO: API INTEGRATION -> PUT /api/admin/products/{id} { ...productData } => { updatedProduct } */}
                         <button className="p-2 rounded-md hover:bg-muted text-primary transition-colors">
                           <Pencil className="w-4 h-4" />
@@ -320,6 +346,31 @@ const ProductManagement = () => {
                   </div>
                 </div>
 
+                {/* Rating Controls */}
+                <div className="border-t border-border pt-4">
+                  <p className="text-sm font-medium text-foreground mb-2">Rating Settings</p>
+                  <div className="flex flex-wrap gap-6">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={form.enableRating}
+                        onChange={(e) => setForm({ ...form, enableRating: e.target.checked })}
+                        className="w-4 h-4 rounded border-border text-primary focus:ring-ring"
+                      />
+                      <span className="text-sm text-foreground">Enable Rating</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={form.showRating}
+                        onChange={(e) => setForm({ ...form, showRating: e.target.checked })}
+                        className="w-4 h-4 rounded border-border text-primary focus:ring-ring"
+                      />
+                      <span className="text-sm text-foreground">Show Rating</span>
+                    </label>
+                  </div>
+                </div>
+
                 <div className="flex gap-3 pt-2">
                   <button type="button" onClick={() => setShowModal(false)}
                     className="flex-1 h-11 rounded-lg border border-border text-foreground font-display font-bold text-sm hover:bg-muted transition-colors">
@@ -334,9 +385,86 @@ const ProductManagement = () => {
             </div>
           </div>
         )}
+
+        {/* Product Detail Preview Popup */}
+        {previewProduct && (
+          <div
+            className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 overflow-y-auto"
+            onClick={() => setPreviewProduct(null)}
+          >
+            <div
+              className="bg-card rounded-xl shadow-modal w-full max-w-2xl my-8 animate-fade-in flex flex-col max-h-[85vh]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between p-6 border-b border-border">
+                <div>
+                  <h3 className="font-display font-bold text-xl text-foreground">{previewProduct.name}</h3>
+                  <p className="text-sm text-muted-foreground">{previewProduct.category}</p>
+                </div>
+                <button onClick={() => setPreviewProduct(null)} className="p-1 rounded-md hover:bg-muted">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-6 grid grid-cols-2 gap-4 border-b border-border">
+                <div>
+                  <p className="text-xs text-muted-foreground">Selling Price</p>
+                  <p className="font-display font-bold text-lg text-foreground">₹{previewProduct.sellingPrice}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Stock</p>
+                  <p className="font-display font-bold text-lg text-foreground">{previewProduct.quantity}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Average Rating</p>
+                  <p className="font-display font-bold text-lg text-foreground inline-flex items-center gap-1">
+                    <Star className="w-5 h-5 fill-secondary text-secondary" />
+                    {(previewProduct.avgRating ?? 0).toFixed(1)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Status</p>
+                  <p className="font-display font-bold text-lg text-foreground">
+                    {previewProduct.active ? "Active" : "Inactive"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Reviews scrollable section */}
+              <div className="flex-1 overflow-y-auto p-6">
+                <h4 className="font-display font-semibold text-foreground mb-3">
+                  Customer Ratings &amp; Reviews
+                </h4>
+                {/* TODO: API INTEGRATION -> GET /api/admin/products/{id}/ratings => { reviews[] } */}
+                <div className="space-y-3">
+                  {sampleReviews.map((rev) => (
+                    <div key={rev.id} className="border border-border rounded-lg p-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-sm font-medium text-foreground">{rev.user}</p>
+                        <span className="text-xs text-muted-foreground">{rev.date}</span>
+                      </div>
+                      <div className="flex items-center gap-0.5 mb-1">
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <Star
+                            key={n}
+                            className={`w-3.5 h-3.5 ${
+                              n <= rev.rating ? "fill-secondary text-secondary" : "text-muted-foreground"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <p className="text-sm text-muted-foreground">{rev.comment}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
 };
 
 export default ProductManagement;
+

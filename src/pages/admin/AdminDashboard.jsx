@@ -1,7 +1,22 @@
 import AdminSidebar from "@/components/AdminSidebar";
 import { Package, Users, ShoppingCart, TrendingUp } from "lucide-react";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+} from "recharts";
 
 // TODO: API INTEGRATION -> GET /api/admin/dashboard/stats => { totalProducts, totalUsers, totalOrders, revenue }
+// TODO: API INTEGRATION -> GET /api/admin/dashboard/monthly-orders => [{ month, orders }]
+// TODO: API INTEGRATION -> GET /api/admin/dashboard/sales-by-category => [{ category, value }]
 
 const stats = [
   { label: "Total Products", value: "1,234", icon: Package, color: "bg-primary/10 text-primary" },
@@ -10,12 +25,32 @@ const stats = [
   { label: "Revenue", value: "₹12,45,000", icon: TrendingUp, color: "bg-destructive/10 text-destructive" },
 ];
 
+const monthlyOrders = [
+  { month: "Nov", orders: 120 },
+  { month: "Dec", orders: 165 },
+  { month: "Jan", orders: 142 },
+  { month: "Feb", orders: 198 },
+  { month: "Mar", orders: 230 },
+  { month: "Apr", orders: 275 },
+];
+
+const salesByCategory = [
+  { name: "Cleaning Liquids", value: 420 },
+  { name: "Gloves", value: 180 },
+  { name: "Masks & Safety", value: 130 },
+  { name: "Car Cleaning", value: 240 },
+  { name: "Cleaning Tools", value: 160 },
+];
+
+const PIE_COLORS = ["hsl(var(--primary))", "hsl(var(--secondary))", "hsl(var(--accent))", "hsl(var(--destructive))", "hsl(var(--muted-foreground))"];
+
 const AdminDashboard = () => {
   return (
     <div className="flex min-h-screen">
       <AdminSidebar />
       <main className="flex-1 p-8 bg-muted/30">
         <h2 className="font-display font-bold text-2xl text-foreground mb-8">Dashboard</h2>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {stats.map((stat) => (
             <div key={stat.label} className="bg-card rounded-lg p-6 shadow-card">
@@ -27,6 +62,57 @@ const AdminDashboard = () => {
             </div>
           ))}
         </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {/* Monthly Orders */}
+          <div className="bg-card rounded-lg p-6 shadow-card lg:col-span-2">
+            <h3 className="font-display font-semibold text-foreground mb-4">Monthly Orders</h3>
+            <div className="w-full h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={monthlyOrders} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: 8,
+                      fontSize: 12,
+                    }}
+                  />
+                  <Bar dataKey="orders" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Sales by Category Pie */}
+          <div className="bg-card rounded-lg p-6 shadow-card">
+            <h3 className="font-display font-semibold text-foreground mb-4">Sales by Category</h3>
+            <div className="w-full h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: 8,
+                      fontSize: 12,
+                    }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Pie data={salesByCategory} dataKey="value" nameKey="name" outerRadius={80} innerRadius={40}>
+                    {salesByCategory.map((_, idx) => (
+                      <Cell key={idx} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+
         <div className="bg-card rounded-lg p-6 shadow-card">
           <h3 className="font-display font-semibold text-foreground mb-4">Recent Orders</h3>
           <p className="text-sm text-muted-foreground">Order data will appear here once the API is connected.</p>

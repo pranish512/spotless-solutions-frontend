@@ -70,9 +70,12 @@ const Header = () => {
                 <ShoppingCart className="w-5 h-5" />
                 <span className="absolute -top-1 -right-1 w-5 h-5 bg-secondary text-secondary-foreground text-xs font-bold rounded-full flex items-center justify-center">0</span>
               </Link>
-              <button onClick={logout} className="hidden sm:flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/user/profile" className="hidden sm:flex items-center gap-1 text-sm font-medium text-foreground hover:text-primary transition-colors">
                 <User className="w-4 h-4" />
                 <span>{user?.name}</span>
+              </Link>
+              <button onClick={logout} className="hidden sm:inline text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                Logout
               </button>
             </>
           ) : (
