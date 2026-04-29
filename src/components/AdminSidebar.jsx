@@ -1,15 +1,17 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Package, FolderTree, Users, LogOut, Tag, UserCog, Shield } from "lucide-react";
+import { LayoutDashboard, Package, FolderTree, Users, LogOut, Tag, UserCog, Shield, ShoppingBag, UserCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 const links = [
   { label: "Dashboard", to: "/admin/dashboard", icon: LayoutDashboard },
+  { label: "Orders", to: "/admin/orders", icon: ShoppingBag },
   { label: "Products", to: "/admin/products", icon: Package },
   { label: "Categories", to: "/admin/categories", icon: FolderTree },
   { label: "Tags", to: "/admin/tags", icon: Tag },
   { label: "Users", to: "/admin/users", icon: Users },
   { label: "User Types", to: "/admin/user-types", icon: UserCog },
   { label: "Staff", to: "/admin/staff", icon: Shield },
+  { label: "Profile", to: "/admin/profile", icon: UserCircle },
 ];
 
 const AdminSidebar = () => {
