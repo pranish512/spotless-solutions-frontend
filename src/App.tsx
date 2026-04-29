@@ -39,6 +39,7 @@ const App = () => (
         <Route path="/register" element={<Register />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
+        <Route path="/payment-success" element={<PaymentSuccess />} />
 
         {/* Authenticated User Routes */}
         <Route path="/user/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
@@ -48,6 +49,8 @@ const App = () => (
 
         {/* Admin Routes (requireAdmin) */}
         <Route path="/admin/dashboard" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
+        <Route path="/admin/profile" element={<ProtectedRoute requireAdmin><AdminProfile /></ProtectedRoute>} />
+        <Route path="/admin/orders" element={<ProtectedRoute requireAdmin><OrderManagement /></ProtectedRoute>} />
         <Route path="/admin/products" element={<ProtectedRoute requireAdmin><ProductManagement /></ProtectedRoute>} />
         <Route path="/admin/categories" element={<ProtectedRoute requireAdmin><CategoryManagement /></ProtectedRoute>} />
         <Route path="/admin/users" element={<ProtectedRoute requireAdmin><UserManagement /></ProtectedRoute>} />
