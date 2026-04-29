@@ -515,6 +515,16 @@ const ProductManagement = () => {
             </div>
           </div>
         )}
+
+        <ConfirmDialog
+          open={!!confirmDeleteId}
+          title="Delete this product?"
+          message="The product will be removed from your catalog. This cannot be undone."
+          confirmLabel="Delete"
+          confirmVariant="danger"
+          onConfirm={handleDelete}
+          onCancel={() => setConfirmDeleteId(null)}
+        />
       </main>
     </div>
   );
