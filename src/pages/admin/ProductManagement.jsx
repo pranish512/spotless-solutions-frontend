@@ -346,6 +346,31 @@ const ProductManagement = () => {
                   </div>
                 </div>
 
+                {/* Rating Controls */}
+                <div className="border-t border-border pt-4">
+                  <p className="text-sm font-medium text-foreground mb-2">Rating Settings</p>
+                  <div className="flex flex-wrap gap-6">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={form.enableRating}
+                        onChange={(e) => setForm({ ...form, enableRating: e.target.checked })}
+                        className="w-4 h-4 rounded border-border text-primary focus:ring-ring"
+                      />
+                      <span className="text-sm text-foreground">Enable Rating</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={form.showRating}
+                        onChange={(e) => setForm({ ...form, showRating: e.target.checked })}
+                        className="w-4 h-4 rounded border-border text-primary focus:ring-ring"
+                      />
+                      <span className="text-sm text-foreground">Show Rating</span>
+                    </label>
+                  </div>
+                </div>
+
                 <div className="flex gap-3 pt-2">
                   <button type="button" onClick={() => setShowModal(false)}
                     className="flex-1 h-11 rounded-lg border border-border text-foreground font-display font-bold text-sm hover:bg-muted transition-colors">
@@ -360,9 +385,86 @@ const ProductManagement = () => {
             </div>
           </div>
         )}
+
+        {/* Product Detail Preview Popup */}
+        {previewProduct && (
+          <div
+            className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 overflow-y-auto"
+            onClick={() => setPreviewProduct(null)}
+          >
+            <div
+              className="bg-card rounded-xl shadow-modal w-full max-w-2xl my-8 animate-fade-in flex flex-col max-h-[85vh]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between p-6 border-b border-border">
+                <div>
+                  <h3 className="font-display font-bold text-xl text-foreground">{previewProduct.name}</h3>
+                  <p className="text-sm text-muted-foreground">{previewProduct.category}</p>
+                </div>
+                <button onClick={() => setPreviewProduct(null)} className="p-1 rounded-md hover:bg-muted">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-6 grid grid-cols-2 gap-4 border-b border-border">
+                <div>
+                  <p className="text-xs text-muted-foreground">Selling Price</p>
+                  <p className="font-display font-bold text-lg text-foreground">₹{previewProduct.sellingPrice}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Stock</p>
+                  <p className="font-display font-bold text-lg text-foreground">{previewProduct.quantity}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Average Rating</p>
+                  <p className="font-display font-bold text-lg text-foreground inline-flex items-center gap-1">
+                    <Star className="w-5 h-5 fill-secondary text-secondary" />
+                    {(previewProduct.avgRating ?? 0).toFixed(1)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Status</p>
+                  <p className="font-display font-bold text-lg text-foreground">
+                    {previewProduct.active ? "Active" : "Inactive"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Reviews scrollable section */}
+              <div className="flex-1 overflow-y-auto p-6">
+                <h4 className="font-display font-semibold text-foreground mb-3">
+                  Customer Ratings &amp; Reviews
+                </h4>
+                {/* TODO: API INTEGRATION -> GET /api/admin/products/{id}/ratings => { reviews[] } */}
+                <div className="space-y-3">
+                  {sampleReviews.map((rev) => (
+                    <div key={rev.id} className="border border-border rounded-lg p-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-sm font-medium text-foreground">{rev.user}</p>
+                        <span className="text-xs text-muted-foreground">{rev.date}</span>
+                      </div>
+                      <div className="flex items-center gap-0.5 mb-1">
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <Star
+                            key={n}
+                            className={`w-3.5 h-3.5 ${
+                              n <= rev.rating ? "fill-secondary text-secondary" : "text-muted-foreground"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <p className="text-sm text-muted-foreground">{rev.comment}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
 };
 
 export default ProductManagement;
+
