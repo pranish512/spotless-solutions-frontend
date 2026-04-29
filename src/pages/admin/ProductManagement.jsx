@@ -1,15 +1,23 @@
 import { useState } from "react";
 import AdminSidebar from "@/components/AdminSidebar";
 import ToggleSwitch from "@/components/ToggleSwitch";
-import { Plus, Pencil, Trash2, Search, X, Upload } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, X, Upload, Eye, Star } from "lucide-react";
 
 // TODO: API INTEGRATION -> GET /api/admin/products?page=1&search= => { products[], totalPages }
 const initialProducts = [
-  { id: "1", name: "Premium Multi-Surface Cleaner 500ml", category: "Cleaning Liquids", sellingPrice: 249, quantity: 150, active: true },
-  { id: "2", name: "Heavy Duty Rubber Gloves", category: "Gloves", sellingPrice: 149, quantity: 300, active: true },
-  { id: "3", name: "N95 Protective Mask – Pack of 10", category: "Masks & Safety", sellingPrice: 399, quantity: 0, active: false },
-  { id: "4", name: "Complete Car Cleaning Kit", category: "Car Cleaning", sellingPrice: 899, quantity: 45, active: true },
-  { id: "5", name: "Microfiber Mop with Handle", category: "Cleaning Tools", sellingPrice: 599, quantity: 80, active: true },
+  { id: "1", name: "Premium Multi-Surface Cleaner 500ml", category: "Cleaning Liquids", sellingPrice: 249, quantity: 150, active: true, avgRating: 4.5 },
+  { id: "2", name: "Heavy Duty Rubber Gloves", category: "Gloves", sellingPrice: 149, quantity: 300, active: true, avgRating: 4.2 },
+  { id: "3", name: "N95 Protective Mask – Pack of 10", category: "Masks & Safety", sellingPrice: 399, quantity: 0, active: false, avgRating: 4.8 },
+  { id: "4", name: "Complete Car Cleaning Kit", category: "Car Cleaning", sellingPrice: 899, quantity: 45, active: true, avgRating: 4.6 },
+  { id: "5", name: "Microfiber Mop with Handle", category: "Cleaning Tools", sellingPrice: 599, quantity: 80, active: true, avgRating: 4.0 },
+];
+
+// TODO: API INTEGRATION -> GET /api/admin/products/{id}/ratings => { avgRating, total, reviews: [{ id, user, rating, comment, date }] }
+const sampleReviews = [
+  { id: "r1", user: "Anita S.", rating: 5, comment: "Excellent quality, leaves surfaces shining.", date: "2026-04-12" },
+  { id: "r2", user: "Rohit K.", rating: 4, comment: "Good product, value for money.", date: "2026-04-08" },
+  { id: "r3", user: "Meera P.", rating: 5, comment: "Highly recommend, lasts a long time.", date: "2026-04-02" },
+  { id: "r4", user: "Vikas D.", rating: 3, comment: "Average. Smell could be better.", date: "2026-03-28" },
 ];
 
 // TODO: API INTEGRATION -> GET /api/admin/categories
@@ -39,6 +47,8 @@ const emptyForm = {
   manufacturer: "",
   hsn: "",
   productType: "Simple",
+  enableRating: true,
+  showRating: true,
 };
 
 const ProductManagement = () => {
@@ -46,6 +56,7 @@ const ProductManagement = () => {
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [previewProduct, setPreviewProduct] = useState(null);
 
   const filtered = products.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
 
