@@ -1,5 +1,6 @@
 import { useState } from "react";
 import AdminSidebar from "@/components/AdminSidebar";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
 
 // TODO: API INTEGRATION -> GET /api/admin/tags => { tags: [{ id, name, icon }] }
@@ -13,14 +14,42 @@ const initialTags = [
 const TagsManagement = () => {
   const [tags, setTags] = useState(initialTags);
   const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({ name: "", icon: "" });
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+
+  const isEditing = !!editingId;
+
+  const openCreate = () => {
+    setEditingId(null);
+    setForm({ name: "", icon: "" });
+    setShowModal(true);
+  };
+
+  const openEdit = (tag) => {
+    setEditingId(tag.id);
+    setForm({ name: tag.name, icon: tag.icon });
+    setShowModal(true);
+  };
 
   const handleSave = (e) => {
     e.preventDefault();
-    // TODO: API INTEGRATION -> POST /api/admin/tags { name, icon } => { tag }
-    setTags((prev) => [...prev, { id: String(Date.now()), ...form }]);
+    if (isEditing) {
+      // TODO: API INTEGRATION -> PUT /api/admin/tags/{id} { name, icon } => { tag }
+      setTags((prev) => prev.map((t) => (t.id === editingId ? { ...t, ...form } : t)));
+    } else {
+      // TODO: API INTEGRATION -> POST /api/admin/tags { name, icon } => { tag }
+      setTags((prev) => [...prev, { id: String(Date.now()), ...form }]);
+    }
     setForm({ name: "", icon: "" });
+    setEditingId(null);
     setShowModal(false);
+  };
+
+  const handleDelete = () => {
+    // TODO: API INTEGRATION -> DELETE /api/admin/tags/{id} => { success }
+    setTags((prev) => prev.filter((t) => t.id !== confirmDeleteId));
+    setConfirmDeleteId(null);
   };
 
   return (
@@ -30,7 +59,7 @@ const TagsManagement = () => {
         <div className="flex items-center justify-between mb-8">
           <h2 className="font-display font-bold text-2xl text-foreground">Tags Management</h2>
           <button
-            onClick={() => setShowModal(true)}
+            onClick={openCreate}
             className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm hover:opacity-90 transition-opacity"
           >
             <Plus className="w-4 h-4" /> Add Tag
@@ -53,12 +82,16 @@ const TagsManagement = () => {
                   <td className="px-4 py-3 text-sm font-medium text-foreground">{t.name}</td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-1">
-                      {/* TODO: API INTEGRATION -> PUT /api/admin/tags/{id} { name, icon } => { tag } */}
-                      <button className="p-2 rounded-md hover:bg-muted text-primary transition-colors">
+                      <button
+                        onClick={() => openEdit(t)}
+                        className="p-2 rounded-md hover:bg-muted text-primary transition-colors"
+                      >
                         <Pencil className="w-4 h-4" />
                       </button>
-                      {/* TODO: API INTEGRATION -> DELETE /api/admin/tags/{id} => { success } */}
-                      <button className="p-2 rounded-md hover:bg-destructive/10 text-destructive transition-colors">
+                      <button
+                        onClick={() => setConfirmDeleteId(t.id)}
+                        className="p-2 rounded-md hover:bg-destructive/10 text-destructive transition-colors"
+                      >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -73,7 +106,9 @@ const TagsManagement = () => {
           <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
             <div className="bg-card rounded-xl shadow-modal w-full max-w-md p-8 animate-fade-in" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-6">
-                <h3 className="font-display font-bold text-xl text-foreground">Create Tag</h3>
+                <h3 className="font-display font-bold text-xl text-foreground">
+                  {isEditing ? "Edit Tag" : "Create Tag"}
+                </h3>
                 <button onClick={() => setShowModal(false)} className="p-1 rounded-md hover:bg-muted">
                   <X className="w-5 h-5" />
                 </button>
@@ -103,13 +138,23 @@ const TagsManagement = () => {
                     Cancel
                   </button>
                   <button type="submit" className="flex-1 h-11 rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm hover:opacity-90 transition-opacity">
-                    Save Tag
+                    {isEditing ? "Update" : "Create"}
                   </button>
                 </div>
               </form>
             </div>
           </div>
         )}
+
+        <ConfirmDialog
+          open={!!confirmDeleteId}
+          title="Delete tag?"
+          message="This tag will be removed from all products it's currently applied to."
+          confirmLabel="Delete"
+          confirmVariant="danger"
+          onConfirm={handleDelete}
+          onCancel={() => setConfirmDeleteId(null)}
+        />
       </main>
     </div>
   );

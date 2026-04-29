@@ -9,6 +9,7 @@ import Login from "@/pages/public/Login";
 import Register from "@/pages/public/Register";
 import Cart from "@/pages/public/Cart";
 import Checkout from "@/pages/public/Checkout";
+import PaymentSuccess from "@/pages/public/PaymentSuccess";
 
 // User pages (authenticated)
 import Profile from "@/pages/user/Profile";
@@ -18,12 +19,14 @@ import Wishlist from "@/pages/user/Wishlist";
 
 // Admin pages (admin only)
 import AdminDashboard from "@/pages/admin/AdminDashboard";
+import AdminProfile from "@/pages/admin/AdminProfile";
 import ProductManagement from "@/pages/admin/ProductManagement";
 import CategoryManagement from "@/pages/admin/CategoryManagement";
 import UserManagement from "@/pages/admin/UserManagement";
 import StaffManagement from "@/pages/admin/StaffManagement";
 import TagsManagement from "@/pages/admin/TagsManagement";
 import UserTypeManagement from "@/pages/admin/UserTypeManagement";
+import OrderManagement from "@/pages/admin/OrderManagement";
 
 const App = () => (
   <AuthProvider>
@@ -36,6 +39,7 @@ const App = () => (
         <Route path="/register" element={<Register />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
+        <Route path="/payment-success" element={<PaymentSuccess />} />
 
         {/* Authenticated User Routes */}
         <Route path="/user/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
@@ -45,6 +49,8 @@ const App = () => (
 
         {/* Admin Routes (requireAdmin) */}
         <Route path="/admin/dashboard" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
+        <Route path="/admin/profile" element={<ProtectedRoute requireAdmin><AdminProfile /></ProtectedRoute>} />
+        <Route path="/admin/orders" element={<ProtectedRoute requireAdmin><OrderManagement /></ProtectedRoute>} />
         <Route path="/admin/products" element={<ProtectedRoute requireAdmin><ProductManagement /></ProtectedRoute>} />
         <Route path="/admin/categories" element={<ProtectedRoute requireAdmin><CategoryManagement /></ProtectedRoute>} />
         <Route path="/admin/users" element={<ProtectedRoute requireAdmin><UserManagement /></ProtectedRoute>} />

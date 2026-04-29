@@ -1,6 +1,7 @@
 import { useState } from "react";
 import AdminSidebar from "@/components/AdminSidebar";
 import AccessControlMatrix from "@/components/AccessControlMatrix";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { buildDefaultPermissions } from "@/lib/screens";
 import { Plus, Pencil, Trash2, Search, X, Upload } from "lucide-react";
 
@@ -60,6 +61,10 @@ const UserManagement = () => {
   const [filterBranch, setFilterBranch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [editingId, setEditingId] = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+
+  const isEditing = !!editingId;
 
   const filtered = users.filter((u) => {
     const matchSearch =
@@ -71,12 +76,36 @@ const UserManagement = () => {
     return matchSearch && matchType && matchBranch;
   });
 
+  const openCreate = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+    setShowModal(true);
+  };
+
+  const openEdit = (u) => {
+    setEditingId(u.id);
+    setForm({ ...emptyForm, ...u, permissions: u.permissions || buildDefaultPermissions() });
+    setShowModal(true);
+  };
+
   const handleSave = (e) => {
     e.preventDefault();
-    // TODO: API INTEGRATION -> POST /api/admin/users { ...form, permissions } => { user }
-    setUsers((prev) => [...prev, { id: String(Date.now()), ...form }]);
+    if (isEditing) {
+      // TODO: API INTEGRATION -> PUT /api/admin/users/{id} { ...form, permissions } => { user }
+      setUsers((prev) => prev.map((u) => (u.id === editingId ? { ...u, ...form } : u)));
+    } else {
+      // TODO: API INTEGRATION -> POST /api/admin/users { ...form, permissions } => { user }
+      setUsers((prev) => [...prev, { id: String(Date.now()), ...form }]);
+    }
     setForm(emptyForm);
+    setEditingId(null);
     setShowModal(false);
+  };
+
+  const handleDelete = () => {
+    // TODO: API INTEGRATION -> DELETE /api/admin/users/{id} => { success }
+    setUsers((prev) => prev.filter((u) => u.id !== confirmDeleteId));
+    setConfirmDeleteId(null);
   };
 
   const handlePhoto = (e) => {
@@ -93,7 +122,7 @@ const UserManagement = () => {
         <div className="flex items-center justify-between mb-8">
           <h2 className="font-display font-bold text-2xl text-foreground">User Management</h2>
           <button
-            onClick={() => setShowModal(true)}
+            onClick={openCreate}
             className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm hover:opacity-90 transition-opacity"
           >
             <Plus className="w-4 h-4" /> Add User
@@ -152,12 +181,18 @@ const UserManagement = () => {
                     <td className="px-4 py-3 text-sm text-foreground">{u.branch}</td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        {/* TODO: API INTEGRATION -> PUT /api/admin/users/{id} { ...userData, permissions } => { user } */}
-                        <button className="p-2 rounded-md hover:bg-muted text-primary transition-colors">
+                        <button
+                          onClick={() => openEdit(u)}
+                          className="p-2 rounded-md hover:bg-muted text-primary transition-colors"
+                          aria-label="Edit"
+                        >
                           <Pencil className="w-4 h-4" />
                         </button>
-                        {/* TODO: API INTEGRATION -> DELETE /api/admin/users/{id} => { success } */}
-                        <button className="p-2 rounded-md hover:bg-destructive/10 text-destructive transition-colors">
+                        <button
+                          onClick={() => setConfirmDeleteId(u.id)}
+                          className="p-2 rounded-md hover:bg-destructive/10 text-destructive transition-colors"
+                          aria-label="Delete"
+                        >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
@@ -173,7 +208,7 @@ const UserManagement = () => {
           <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 overflow-y-auto" onClick={() => setShowModal(false)}>
             <div className="bg-card rounded-xl shadow-modal w-full max-w-3xl p-8 my-8 animate-fade-in" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-6">
-                <h3 className="font-display font-bold text-xl text-foreground">Create User</h3>
+                <h3 className="font-display font-bold text-xl text-foreground">{isEditing ? "Edit User" : "Create User"}</h3>
                 <button onClick={() => setShowModal(false)} className="p-1 rounded-md hover:bg-muted">
                   <X className="w-5 h-5" />
                 </button>
@@ -267,13 +302,23 @@ const UserManagement = () => {
                   </button>
                   <button type="submit"
                     className="flex-1 h-11 rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm hover:opacity-90 transition-opacity">
-                    Save User
+                    {isEditing ? "Update" : "Save User"}
                   </button>
                 </div>
               </form>
             </div>
           </div>
         )}
+
+        <ConfirmDialog
+          open={!!confirmDeleteId}
+          title="Delete this user?"
+          message="The user account and its access permissions will be permanently removed."
+          confirmLabel="Delete"
+          confirmVariant="danger"
+          onConfirm={handleDelete}
+          onCancel={() => setConfirmDeleteId(null)}
+        />
       </main>
     </div>
   );
