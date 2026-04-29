@@ -1,7 +1,8 @@
 import { useState } from "react";
 import AdminSidebar from "@/components/AdminSidebar";
 import ToggleSwitch from "@/components/ToggleSwitch";
-import { Plus, Pencil, Trash2, Search, X, Upload, Eye, Star } from "lucide-react";
+import ConfirmDialog from "@/components/ConfirmDialog";
+import { Pencil, Trash2, Search, X, Upload, Eye, Star, Plus } from "lucide-react";
 
 // TODO: API INTEGRATION -> GET /api/admin/products?page=1&search= => { products[], totalPages }
 const initialProducts = [
@@ -56,7 +57,35 @@ const ProductManagement = () => {
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [editingId, setEditingId] = useState(null);
   const [previewProduct, setPreviewProduct] = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+
+  const isEditing = !!editingId;
+
+  const openCreate = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+    setShowModal(true);
+  };
+
+  const openEdit = (product) => {
+    setEditingId(product.id);
+    setForm({
+      ...emptyForm,
+      name: product.name,
+      category: product.category,
+      sellingPrice: product.sellingPrice,
+      quantity: product.quantity,
+    });
+    setShowModal(true);
+  };
+
+  const handleDelete = () => {
+    // TODO: API INTEGRATION -> DELETE /api/admin/products/{id} => { success }
+    setProducts((prev) => prev.filter((p) => p.id !== confirmDeleteId));
+    setConfirmDeleteId(null);
+  };
 
   const filtered = products.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
 
@@ -88,19 +117,37 @@ const ProductManagement = () => {
 
   const handleSave = (e) => {
     e.preventDefault();
-    // TODO: API INTEGRATION -> POST /api/admin/products { ...form } => { product }
-    setProducts((prev) => [
-      ...prev,
-      {
-        id: String(Date.now()),
-        name: form.name,
-        category: form.category,
-        sellingPrice: Number(form.sellingPrice),
-        quantity: Number(form.quantity),
-        active: true,
-      },
-    ]);
+    if (isEditing) {
+      // TODO: API INTEGRATION -> PUT /api/admin/products/{id} { ...form } => { updatedProduct }
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.id === editingId
+            ? {
+                ...p,
+                name: form.name,
+                category: form.category,
+                sellingPrice: Number(form.sellingPrice),
+                quantity: Number(form.quantity),
+              }
+            : p
+        )
+      );
+    } else {
+      // TODO: API INTEGRATION -> POST /api/admin/products { ...form } => { product }
+      setProducts((prev) => [
+        ...prev,
+        {
+          id: String(Date.now()),
+          name: form.name,
+          category: form.category,
+          sellingPrice: Number(form.sellingPrice),
+          quantity: Number(form.quantity),
+          active: true,
+        },
+      ]);
+    }
     setForm(emptyForm);
+    setEditingId(null);
     setShowModal(false);
   };
 
