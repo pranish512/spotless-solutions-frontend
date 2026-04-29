@@ -138,6 +138,7 @@ const ProductManagement = () => {
                   <th className="text-left px-4 py-3 text-sm font-medium text-foreground">Category</th>
                   <th className="text-left px-4 py-3 text-sm font-medium text-foreground">Price</th>
                   <th className="text-left px-4 py-3 text-sm font-medium text-foreground">Quantity</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-foreground">Avg Rating</th>
                   <th className="text-left px-4 py-3 text-sm font-medium text-foreground">Status</th>
                   <th className="text-right px-4 py-3 text-sm font-medium text-foreground">Actions</th>
                 </tr>
@@ -149,6 +150,12 @@ const ProductManagement = () => {
                     <td className="px-4 py-3 text-sm text-muted-foreground">{product.category}</td>
                     <td className="px-4 py-3 text-sm font-medium text-foreground">₹{product.sellingPrice}</td>
                     <td className="px-4 py-3 text-sm text-foreground">{product.quantity}</td>
+                    <td className="px-4 py-3 text-sm text-foreground">
+                      <span className="inline-flex items-center gap-1">
+                        <Star className="w-4 h-4 fill-secondary text-secondary" />
+                        <span className="font-medium">{(product.avgRating ?? 0).toFixed(1)}</span>
+                      </span>
+                    </td>
                     <td className="px-4 py-3">
                       <ToggleSwitch
                         checked={product.active}
@@ -159,6 +166,14 @@ const ProductManagement = () => {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
+                        {/* TODO: API INTEGRATION -> GET /api/admin/products/{id} => { product } (for popup) */}
+                        <button
+                          onClick={() => setPreviewProduct(product)}
+                          className="p-2 rounded-md hover:bg-muted text-foreground transition-colors"
+                          aria-label="View"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
                         {/* TODO: API INTEGRATION -> PUT /api/admin/products/{id} { ...productData } => { updatedProduct } */}
                         <button className="p-2 rounded-md hover:bg-muted text-primary transition-colors">
                           <Pencil className="w-4 h-4" />
