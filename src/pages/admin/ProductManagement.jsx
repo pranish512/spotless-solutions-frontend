@@ -432,7 +432,7 @@ const ProductManagement = () => {
                   </button>
                   <button type="submit"
                     className="flex-1 h-11 rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm hover:opacity-90 transition-opacity">
-                    Save Product
+                    {isEditing ? "Update" : "Save Product"}
                   </button>
                 </div>
               </form>
