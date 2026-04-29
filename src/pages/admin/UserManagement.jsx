@@ -1,6 +1,7 @@
 import { useState } from "react";
 import AdminSidebar from "@/components/AdminSidebar";
 import AccessControlMatrix from "@/components/AccessControlMatrix";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { buildDefaultPermissions } from "@/lib/screens";
 import { Plus, Pencil, Trash2, Search, X, Upload } from "lucide-react";
 
@@ -60,6 +61,10 @@ const UserManagement = () => {
   const [filterBranch, setFilterBranch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [editingId, setEditingId] = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+
+  const isEditing = !!editingId;
 
   const filtered = users.filter((u) => {
     const matchSearch =
@@ -71,12 +76,36 @@ const UserManagement = () => {
     return matchSearch && matchType && matchBranch;
   });
 
+  const openCreate = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+    setShowModal(true);
+  };
+
+  const openEdit = (u) => {
+    setEditingId(u.id);
+    setForm({ ...emptyForm, ...u, permissions: u.permissions || buildDefaultPermissions() });
+    setShowModal(true);
+  };
+
   const handleSave = (e) => {
     e.preventDefault();
-    // TODO: API INTEGRATION -> POST /api/admin/users { ...form, permissions } => { user }
-    setUsers((prev) => [...prev, { id: String(Date.now()), ...form }]);
+    if (isEditing) {
+      // TODO: API INTEGRATION -> PUT /api/admin/users/{id} { ...form, permissions } => { user }
+      setUsers((prev) => prev.map((u) => (u.id === editingId ? { ...u, ...form } : u)));
+    } else {
+      // TODO: API INTEGRATION -> POST /api/admin/users { ...form, permissions } => { user }
+      setUsers((prev) => [...prev, { id: String(Date.now()), ...form }]);
+    }
     setForm(emptyForm);
+    setEditingId(null);
     setShowModal(false);
+  };
+
+  const handleDelete = () => {
+    // TODO: API INTEGRATION -> DELETE /api/admin/users/{id} => { success }
+    setUsers((prev) => prev.filter((u) => u.id !== confirmDeleteId));
+    setConfirmDeleteId(null);
   };
 
   const handlePhoto = (e) => {
