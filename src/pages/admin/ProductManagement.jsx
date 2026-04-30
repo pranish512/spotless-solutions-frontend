@@ -25,8 +25,6 @@ const sampleReviews = [
 const categoryOptions = ["Cleaning Liquids", "Gloves", "Masks & Safety", "Car Cleaning", "Cleaning Tools", "Kitchen Care"];
 // TODO: API INTEGRATION -> GET /api/admin/tags
 const tagOptions = ["Eco-Friendly", "Best Seller", "New Arrival", "On Sale"];
-const sizeOptions = ["S", "M", "L"];
-const volumeOptions = ["500ml", "1L", "5L"];
 const productTypes = ["Simple", "Variable size", "Bundle"];
 
 const emptyForm = {
@@ -34,8 +32,8 @@ const emptyForm = {
   description: "",
   highlights: "",
   tags: [],
-  size: "M",
-  volume: "500ml",
+  size: "",
+  volume: "",
   sku: "",
   image: "",
   videoDemo: "",
@@ -44,10 +42,12 @@ const emptyForm = {
   actualPrice: 0,
   sellingPrice: 0,
   discount: 0,
+  gstPercent: 18,
   barcode: "",
   manufacturer: "",
   hsn: "",
   productType: "Simple",
+  bundleItems: [], // [{ productId, quantity }]
   enableRating: true,
   showRating: true,
 };
