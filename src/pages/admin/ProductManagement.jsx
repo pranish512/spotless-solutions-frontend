@@ -25,8 +25,6 @@ const sampleReviews = [
 const categoryOptions = ["Cleaning Liquids", "Gloves", "Masks & Safety", "Car Cleaning", "Cleaning Tools", "Kitchen Care"];
 // TODO: API INTEGRATION -> GET /api/admin/tags
 const tagOptions = ["Eco-Friendly", "Best Seller", "New Arrival", "On Sale"];
-const sizeOptions = ["S", "M", "L"];
-const volumeOptions = ["500ml", "1L", "5L"];
 const productTypes = ["Simple", "Variable size", "Bundle"];
 
 const emptyForm = {
@@ -34,8 +32,8 @@ const emptyForm = {
   description: "",
   highlights: "",
   tags: [],
-  size: "M",
-  volume: "500ml",
+  size: "",
+  volume: "",
   sku: "",
   image: "",
   videoDemo: "",
@@ -44,10 +42,12 @@ const emptyForm = {
   actualPrice: 0,
   sellingPrice: 0,
   discount: 0,
+  gstPercent: 18,
   barcode: "",
   manufacturer: "",
   hsn: "",
   productType: "Simple",
+  bundleItems: [], // [{ productId, quantity }]
   enableRating: true,
   showRating: true,
 };
@@ -98,6 +98,31 @@ const ProductManagement = () => {
     setForm((f) => ({
       ...f,
       tags: f.tags.includes(tag) ? f.tags.filter((t) => t !== tag) : [...f.tags, tag],
+    }));
+  };
+
+  const addBundleItem = () => {
+    const firstAvailable = products.find(
+      (p) => !form.bundleItems.some((b) => b.productId === p.id)
+    );
+    if (!firstAvailable) return;
+    setForm((f) => ({
+      ...f,
+      bundleItems: [...f.bundleItems, { productId: firstAvailable.id, quantity: 1 }],
+    }));
+  };
+
+  const updateBundleItem = (index, patch) => {
+    setForm((f) => ({
+      ...f,
+      bundleItems: f.bundleItems.map((b, i) => (i === index ? { ...b, ...patch } : b)),
+    }));
+  };
+
+  const removeBundleItem = (index) => {
+    setForm((f) => ({
+      ...f,
+      bundleItems: f.bundleItems.filter((_, i) => i !== index),
     }));
   };
 
@@ -152,14 +177,14 @@ const ProductManagement = () => {
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen flex-col lg:flex-row">
       <AdminSidebar />
-      <main className="flex-1 p-8 bg-muted/30">
-        <div className="flex items-center justify-between mb-8">
+      <main className="flex-1 min-w-0 p-4 md:p-6 lg:p-8 bg-muted/30">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 md:mb-8">
           <h2 className="font-display font-bold text-2xl text-foreground">Product Management</h2>
           <button
             onClick={openCreate}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm hover:opacity-90 transition-opacity"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm hover:opacity-90 transition-opacity self-start sm:self-auto"
           >
             <Plus className="w-4 h-4" /> Add Product
           </button>
@@ -246,192 +271,296 @@ const ProductManagement = () => {
         </div>
 
         {showModal && (
-          <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 overflow-y-auto" onClick={() => setShowModal(false)}>
-            <div className="bg-card rounded-xl shadow-modal w-full max-w-4xl p-8 my-8 animate-fade-in" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="font-display font-bold text-xl text-foreground">{isEditing ? "Edit Product" : "Add Product"}</h3>
-                <button onClick={() => setShowModal(false)} className="p-1 rounded-md hover:bg-muted">
+          <div
+            className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-2 sm:p-4"
+            onClick={() => setShowModal(false)}
+          >
+            <div
+              className="bg-card rounded-xl shadow-modal w-full max-w-4xl flex flex-col max-h-[95vh] sm:max-h-[90vh] animate-fade-in overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Sticky header */}
+              <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-border shrink-0">
+                <h3 className="font-display font-bold text-lg sm:text-xl text-foreground">
+                  {isEditing ? "Edit Product" : "Add Product"}
+                </h3>
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="p-1 rounded-md hover:bg-muted"
+                  aria-label="Close"
+                >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <form className="space-y-5" onSubmit={handleSave}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-foreground mb-1">Name *</label>
-                    <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-                      className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-foreground mb-1">Description</label>
-                    <textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
-                      className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body resize-none" />
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-foreground mb-1">Product Highlights</label>
-                    <textarea rows={2} value={form.highlights} onChange={(e) => setForm({ ...form, highlights: e.target.value })}
-                      placeholder="One highlight per line"
-                      className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body resize-none" />
-                  </div>
-
-                  {/* Tags */}
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-foreground mb-1">Tags</label>
-                    <div className="flex flex-wrap gap-2">
-                      {tagOptions.map((t) => {
-                        const active = form.tags.includes(t);
-                        return (
-                          <button
-                            type="button"
-                            key={t}
-                            onClick={() => toggleTag(t)}
-                            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                              active
-                                ? "bg-primary text-primary-foreground border-primary"
-                                : "bg-background text-foreground border-border hover:bg-muted"
-                            }`}
-                          >
-                            {t}
-                          </button>
-                        );
-                      })}
+              <form className="flex flex-col flex-1 min-h-0" onSubmit={handleSave}>
+                {/* Scrollable body */}
+                <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-foreground mb-1">Name *</label>
+                      <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
+                        className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
                     </div>
-                  </div>
 
-                  {/* Variants / Units */}
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Size</label>
-                    <select value={form.size} onChange={(e) => setForm({ ...form, size: e.target.value })}
-                      className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body">
-                      {sizeOptions.map((o) => <option key={o}>{o}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Volume</label>
-                    <select value={form.volume} onChange={(e) => setForm({ ...form, volume: e.target.value })}
-                      className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body">
-                      {volumeOptions.map((o) => <option key={o}>{o}</option>)}
-                    </select>
-                  </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-foreground mb-1">Description</label>
+                      <textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
+                        className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body resize-none" />
+                    </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Product Code (SKU) *</label>
-                    <input required value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })}
-                      className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Product Category *</label>
-                    <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}
-                      className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body">
-                      {categoryOptions.map((c) => <option key={c}>{c}</option>)}
-                    </select>
-                  </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-foreground mb-1">Product Highlights</label>
+                      <textarea rows={2} value={form.highlights} onChange={(e) => setForm({ ...form, highlights: e.target.value })}
+                        placeholder="One highlight per line"
+                        className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body resize-none" />
+                    </div>
 
-                  {/* Image */}
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Product Image</label>
-                    <div className="flex items-center gap-3">
-                      <div className="w-16 h-16 rounded-lg bg-muted overflow-hidden flex items-center justify-center">
-                        {form.image ? (
-                          <img src={form.image} alt="Product" className="w-full h-full object-cover" />
-                        ) : (
-                          <Upload className="w-5 h-5 text-muted-foreground" />
-                        )}
+                    {/* Tags */}
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-foreground mb-1">Tags</label>
+                      <div className="flex flex-wrap gap-2">
+                        {tagOptions.map((t) => {
+                          const active = form.tags.includes(t);
+                          return (
+                            <button
+                              type="button"
+                              key={t}
+                              onClick={() => toggleTag(t)}
+                              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                                active
+                                  ? "bg-primary text-primary-foreground border-primary"
+                                  : "bg-background text-foreground border-border hover:bg-muted"
+                              }`}
+                            >
+                              {t}
+                            </button>
+                          );
+                        })}
                       </div>
-                      <input type="file" accept="image/*" onChange={handleImage} className="text-sm" />
+                    </div>
+
+                    {/* Variants / Units — now free-text inputs */}
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">Size</label>
+                      <input
+                        value={form.size}
+                        onChange={(e) => setForm({ ...form, size: e.target.value })}
+                        placeholder="e.g. S / M / L / 30x40 cm"
+                        className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">Volume</label>
+                      <input
+                        value={form.volume}
+                        onChange={(e) => setForm({ ...form, volume: e.target.value })}
+                        placeholder="e.g. 500ml / 1L / 5L"
+                        className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">Product Code (SKU) *</label>
+                      <input required value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })}
+                        className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">Product Category *</label>
+                      <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}
+                        className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body">
+                        {categoryOptions.map((c) => <option key={c}>{c}</option>)}
+                      </select>
+                    </div>
+
+                    {/* Image */}
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">Product Image</label>
+                      <div className="flex items-center gap-3">
+                        <div className="w-16 h-16 rounded-lg bg-muted overflow-hidden flex items-center justify-center shrink-0">
+                          {form.image ? (
+                            <img src={form.image} alt="Product" className="w-full h-full object-cover" />
+                          ) : (
+                            <Upload className="w-5 h-5 text-muted-foreground" />
+                          )}
+                        </div>
+                        <input type="file" accept="image/*" onChange={handleImage} className="text-sm min-w-0" />
+                      </div>
+                    </div>
+                    {/* Video Demo */}
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">Video Demo (upload or link)</label>
+                      <input type="file" accept="video/*" onChange={handleVideo} className="text-sm mb-1 block w-full" />
+                      <input
+                        value={typeof form.videoDemo === "string" && form.videoDemo.startsWith("blob:") ? "" : form.videoDemo}
+                        onChange={(e) => setForm({ ...form, videoDemo: e.target.value })}
+                        placeholder="Or paste video URL"
+                        className="w-full h-9 px-3 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body text-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">Available Quantity *</label>
+                      <input required type="number" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })}
+                        className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">Product Type *</label>
+                      <select value={form.productType} onChange={(e) => setForm({ ...form, productType: e.target.value })}
+                        className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body">
+                        {productTypes.map((p) => <option key={p}>{p}</option>)}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">Actual Price (₹) *</label>
+                      <input required type="number" value={form.actualPrice} onChange={(e) => setForm({ ...form, actualPrice: e.target.value })}
+                        className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">Selling Price (₹) *</label>
+                      <input required type="number" value={form.sellingPrice} onChange={(e) => setForm({ ...form, sellingPrice: e.target.value })}
+                        className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">Discount (%)</label>
+                      <input type="number" value={form.discount} onChange={(e) => setForm({ ...form, discount: e.target.value })}
+                        className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">GST (%)</label>
+                      <input
+                        type="number"
+                        step="1"
+                        min="0"
+                        max="28"
+                        value={form.gstPercent}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            gstPercent: e.target.value === "" ? "" : parseInt(e.target.value, 10) || 0,
+                          })
+                        }
+                        placeholder="e.g. 18"
+                        className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">Barcode</label>
+                      <input value={form.barcode} onChange={(e) => setForm({ ...form, barcode: e.target.value })}
+                        className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">Manufacturer</label>
+                      <input value={form.manufacturer} onChange={(e) => setForm({ ...form, manufacturer: e.target.value })}
+                        className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">HSN / SAC</label>
+                      <input value={form.hsn} onChange={(e) => setForm({ ...form, hsn: e.target.value })}
+                        className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
                     </div>
                   </div>
-                  {/* Video Demo */}
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Video Demo (upload or link)</label>
-                    <input type="file" accept="video/*" onChange={handleVideo} className="text-sm mb-1 block" />
-                    <input
-                      value={typeof form.videoDemo === "string" && form.videoDemo.startsWith("blob:") ? "" : form.videoDemo}
-                      onChange={(e) => setForm({ ...form, videoDemo: e.target.value })}
-                      placeholder="Or paste video URL"
-                      className="w-full h-9 px-3 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body text-sm"
-                    />
-                  </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Available Quantity *</label>
-                    <input required type="number" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })}
-                      className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Product Type *</label>
-                    <select value={form.productType} onChange={(e) => setForm({ ...form, productType: e.target.value })}
-                      className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body">
-                      {productTypes.map((p) => <option key={p}>{p}</option>)}
-                    </select>
-                  </div>
+                  {/* Bundle items — only when productType is Bundle */}
+                  {form.productType === "Bundle" && (
+                    <div className="border border-border rounded-lg p-4 bg-muted/30">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <p className="text-sm font-medium text-foreground">Bundle Items</p>
+                          <p className="text-xs text-muted-foreground">
+                            Select the products included in this bundle and the quantity of each.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={addBundleItem}
+                          className="inline-flex items-center gap-1 px-3 h-9 rounded-md border border-border text-sm hover:bg-muted"
+                        >
+                          <Plus className="w-4 h-4" /> Add item
+                        </button>
+                      </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Actual Price (₹) *</label>
-                    <input required type="number" value={form.actualPrice} onChange={(e) => setForm({ ...form, actualPrice: e.target.value })}
-                      className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Selling Price (₹) *</label>
-                    <input required type="number" value={form.sellingPrice} onChange={(e) => setForm({ ...form, sellingPrice: e.target.value })}
-                      className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Discount (%)</label>
-                    <input type="number" value={form.discount} onChange={(e) => setForm({ ...form, discount: e.target.value })}
-                      className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Barcode</label>
-                    <input value={form.barcode} onChange={(e) => setForm({ ...form, barcode: e.target.value })}
-                      className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Manufacturer</label>
-                    <input value={form.manufacturer} onChange={(e) => setForm({ ...form, manufacturer: e.target.value })}
-                      className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">HSN / SAC</label>
-                    <input value={form.hsn} onChange={(e) => setForm({ ...form, hsn: e.target.value })}
-                      className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
+                      {form.bundleItems.length === 0 ? (
+                        <p className="text-sm text-muted-foreground py-2">No items added yet.</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {form.bundleItems.map((bi, idx) => (
+                            <div
+                              key={idx}
+                              className="grid grid-cols-1 sm:grid-cols-[1fr_120px_auto] gap-2 items-center"
+                            >
+                              {/* TODO: API INTEGRATION -> GET /api/admin/products?simpleOnly=true => { products[] } */}
+                              <select
+                                value={bi.productId}
+                                onChange={(e) => updateBundleItem(idx, { productId: e.target.value })}
+                                className="w-full h-10 px-3 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body text-sm"
+                              >
+                                {products.map((p) => (
+                                  <option key={p.id} value={p.id}>{p.name}</option>
+                                ))}
+                              </select>
+                              <input
+                                type="number"
+                                min="1"
+                                value={bi.quantity}
+                                onChange={(e) =>
+                                  updateBundleItem(idx, {
+                                    quantity: parseInt(e.target.value, 10) || 1,
+                                  })
+                                }
+                                className="w-full h-10 px-3 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body text-sm"
+                                placeholder="Qty"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeBundleItem(idx)}
+                                className="p-2 rounded-md text-destructive hover:bg-destructive/10 justify-self-start sm:justify-self-auto"
+                                aria-label="Remove bundle item"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Rating Controls */}
+                  <div className="border-t border-border pt-4">
+                    <p className="text-sm font-medium text-foreground mb-2">Rating Settings</p>
+                    <div className="flex flex-wrap gap-6">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={form.enableRating}
+                          onChange={(e) => setForm({ ...form, enableRating: e.target.checked })}
+                          className="w-4 h-4 rounded border-border text-primary focus:ring-ring"
+                        />
+                        <span className="text-sm text-foreground">Enable Rating</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={form.showRating}
+                          onChange={(e) => setForm({ ...form, showRating: e.target.checked })}
+                          className="w-4 h-4 rounded border-border text-primary focus:ring-ring"
+                        />
+                        <span className="text-sm text-foreground">Show Rating</span>
+                      </label>
+                    </div>
                   </div>
                 </div>
 
-                {/* Rating Controls */}
-                <div className="border-t border-border pt-4">
-                  <p className="text-sm font-medium text-foreground mb-2">Rating Settings</p>
-                  <div className="flex flex-wrap gap-6">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={form.enableRating}
-                        onChange={(e) => setForm({ ...form, enableRating: e.target.checked })}
-                        className="w-4 h-4 rounded border-border text-primary focus:ring-ring"
-                      />
-                      <span className="text-sm text-foreground">Enable Rating</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={form.showRating}
-                        onChange={(e) => setForm({ ...form, showRating: e.target.checked })}
-                        className="w-4 h-4 rounded border-border text-primary focus:ring-ring"
-                      />
-                      <span className="text-sm text-foreground">Show Rating</span>
-                    </label>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 pt-2">
+                {/* Sticky footer */}
+                <div className="flex flex-col-reverse sm:flex-row gap-3 px-4 sm:px-6 py-4 border-t border-border bg-card shrink-0">
                   <button type="button" onClick={() => setShowModal(false)}
-                    className="flex-1 h-11 rounded-lg border border-border text-foreground font-display font-bold text-sm hover:bg-muted transition-colors">
+                    className="sm:flex-1 h-11 rounded-lg border border-border text-foreground font-display font-bold text-sm hover:bg-muted transition-colors">
                     Cancel
                   </button>
                   <button type="submit"
-                    className="flex-1 h-11 rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm hover:opacity-90 transition-opacity">
+                    className="sm:flex-1 h-11 rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm hover:opacity-90 transition-opacity">
                     {isEditing ? "Update" : "Save Product"}
                   </button>
                 </div>
