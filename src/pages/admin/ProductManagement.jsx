@@ -177,14 +177,14 @@ const ProductManagement = () => {
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen flex-col lg:flex-row">
       <AdminSidebar />
-      <main className="flex-1 p-8 bg-muted/30">
-        <div className="flex items-center justify-between mb-8">
+      <main className="flex-1 min-w-0 p-4 md:p-6 lg:p-8 bg-muted/30">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 md:mb-8">
           <h2 className="font-display font-bold text-2xl text-foreground">Product Management</h2>
           <button
             onClick={openCreate}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm hover:opacity-90 transition-opacity"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm hover:opacity-90 transition-opacity self-start sm:self-auto"
           >
             <Plus className="w-4 h-4" /> Add Product
           </button>
