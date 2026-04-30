@@ -101,6 +101,31 @@ const ProductManagement = () => {
     }));
   };
 
+  const addBundleItem = () => {
+    const firstAvailable = products.find(
+      (p) => !form.bundleItems.some((b) => b.productId === p.id)
+    );
+    if (!firstAvailable) return;
+    setForm((f) => ({
+      ...f,
+      bundleItems: [...f.bundleItems, { productId: firstAvailable.id, quantity: 1 }],
+    }));
+  };
+
+  const updateBundleItem = (index, patch) => {
+    setForm((f) => ({
+      ...f,
+      bundleItems: f.bundleItems.map((b, i) => (i === index ? { ...b, ...patch } : b)),
+    }));
+  };
+
+  const removeBundleItem = (index) => {
+    setForm((f) => ({
+      ...f,
+      bundleItems: f.bundleItems.filter((_, i) => i !== index),
+    }));
+  };
+
   const handleImage = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
