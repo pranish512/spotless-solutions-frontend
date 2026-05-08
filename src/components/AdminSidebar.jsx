@@ -1,27 +1,54 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Package, FolderTree, Users, LogOut, Tag, UserCog,
-  Shield, ShoppingBag, UserCircle, Menu, X,
+  Shield, ShoppingBag, UserCircle, Menu, X, Library, Building2, ChevronDown, ChevronRight,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
-const links = [
+// Top-level (non-master) entries
+const topLinks = [
   { label: "Dashboard", to: "/admin/dashboard", icon: LayoutDashboard },
   { label: "Orders", to: "/admin/orders", icon: ShoppingBag },
   { label: "Products", to: "/admin/products", icon: Package },
-  { label: "Categories", to: "/admin/categories", icon: FolderTree },
-  { label: "Tags", to: "/admin/tags", icon: Tag },
   { label: "Users", to: "/admin/users", icon: Users },
-  { label: "User Types", to: "/admin/user-types", icon: UserCog },
   { label: "Staff", to: "/admin/staff", icon: Shield },
   { label: "Profile", to: "/admin/profile", icon: UserCircle },
+];
+
+// Masters group — lightweight configuration screens
+const masterLinks = [
+  { label: "User Type", to: "/admin/user-types", icon: UserCog },
+  { label: "Tags", to: "/admin/tags", icon: Tag },
+  { label: "Branch", to: "/admin/branches", icon: Building2 },
+  { label: "Product Category", to: "/admin/categories", icon: FolderTree },
 ];
 
 const AdminSidebar = () => {
   const location = useLocation();
   const { logout } = useAuth();
   const [open, setOpen] = useState(false);
+
+  const mastersActive = useMemo(
+    () => masterLinks.some((l) => location.pathname === l.to),
+    [location.pathname]
+  );
+  const [mastersOpen, setMastersOpen] = useState(mastersActive);
+
+  const NavItem = ({ link, active }) => (
+    <Link
+      to={link.to}
+      onClick={() => setOpen(false)}
+      className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+        active
+          ? "bg-primary text-primary-foreground"
+          : "text-nav-foreground/70 hover:bg-nav-foreground/10 hover:text-nav-foreground"
+      }`}
+    >
+      <link.icon className="w-4 h-4 shrink-0" />
+      <span className="truncate">{link.label}</span>
+    </Link>
+  );
 
   const SidebarBody = () => (
     <div className="flex h-full flex-col">
@@ -39,24 +66,36 @@ const AdminSidebar = () => {
         </button>
       </div>
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {links.map((link) => {
-          const active = location.pathname === link.to;
-          return (
-            <Link
-              key={link.to}
-              to={link.to}
-              onClick={() => setOpen(false)}
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                active
-                  ? "bg-primary text-primary-foreground"
-                  : "text-nav-foreground/70 hover:bg-nav-foreground/10 hover:text-nav-foreground"
-              }`}
-            >
-              <link.icon className="w-4 h-4 shrink-0" />
-              <span className="truncate">{link.label}</span>
-            </Link>
-          );
-        })}
+        {topLinks.map((link) => (
+          <NavItem key={link.to} link={link} active={location.pathname === link.to} />
+        ))}
+
+        {/* Masters group */}
+        <div className="pt-2">
+          <button
+            type="button"
+            onClick={() => setMastersOpen((v) => !v)}
+            aria-expanded={mastersOpen}
+            className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              mastersActive
+                ? "text-nav-foreground"
+                : "text-nav-foreground/70 hover:bg-nav-foreground/10 hover:text-nav-foreground"
+            }`}
+          >
+            <span className="flex items-center gap-3">
+              <Library className="w-4 h-4 shrink-0" />
+              <span className="truncate">Masters</span>
+            </span>
+            {mastersOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+          </button>
+          {mastersOpen && (
+            <div className="mt-1 ml-3 pl-3 border-l border-nav-foreground/10 space-y-1">
+              {masterLinks.map((link) => (
+                <NavItem key={link.to} link={link} active={location.pathname === link.to} />
+              ))}
+            </div>
+          )}
+        </div>
       </nav>
       <div className="p-4 border-t border-nav-foreground/10">
         <button
