@@ -19,11 +19,7 @@ export const isCustomerType = (name) =>
   USER_TYPES.find((t) => t.name === name)?.kind === "customer";
 
 // Branch options now come from the Branch master (Masters → Branch).
-import { getActiveBranchNames, DEFAULT_BRANCHES } from "./branches";
-export const BRANCH_OPTIONS = new Proxy([], {
-  get(_t, prop) {
-    const list = getActiveBranchNames();
-    const arr = list.length ? list : DEFAULT_BRANCHES.map((b) => b.name);
-    return arr[prop];
-  },
-});
+// Kept as a static fallback; UI should prefer `getActiveBranchNames()` from "@/lib/branches".
+export { getActiveBranchNames as getBranchOptions } from "./branches";
+import { DEFAULT_BRANCHES } from "./branches";
+export const BRANCH_OPTIONS = DEFAULT_BRANCHES.map((b) => b.name);
