@@ -3,7 +3,8 @@ import AdminSidebar from "@/components/AdminSidebar";
 import ResponsiveModal from "@/components/ResponsiveModal";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import UserForm, { buildEmptyUserForm } from "@/components/UserForm";
-import { ALL_USER_TYPE_NAMES, BRANCH_OPTIONS } from "@/lib/userTypes";
+import { ALL_USER_TYPE_NAMES } from "@/lib/userTypes";
+import { getActiveBranchNames } from "@/lib/branches";
 import { Plus, Pencil, Trash2, Search } from "lucide-react";
 
 // TODO: API INTEGRATION -> GET /api/admin/users => all users (customers + staff)
@@ -76,7 +77,7 @@ const UserManagement = () => {
           <select value={filterBranch} onChange={(e) => setFilterBranch(e.target.value)}
             className="h-11 px-4 rounded-lg border border-border bg-card font-body">
             <option value="">All Branches</option>
-            {BRANCH_OPTIONS.map((b) => <option key={b}>{b}</option>)}
+            {getActiveBranchNames().map((b) => <option key={b}>{b}</option>)}
           </select>
         </div>
 
