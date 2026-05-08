@@ -28,6 +28,7 @@ import StaffManagement from "@/pages/admin/StaffManagement";
 import TagsManagement from "@/pages/admin/TagsManagement";
 import UserTypeManagement from "@/pages/admin/UserTypeManagement";
 import OrderManagement from "@/pages/admin/OrderManagement";
+import BranchManagement from "@/pages/admin/BranchManagement";
 
 const App = () => (
   <AuthProvider>
@@ -59,6 +60,7 @@ const App = () => (
         <Route path="/admin/staff" element={<ProtectedRoute requireAdmin><StaffManagement /></ProtectedRoute>} />
         <Route path="/admin/tags" element={<ProtectedRoute requireAdmin><TagsManagement /></ProtectedRoute>} />
         <Route path="/admin/user-types" element={<ProtectedRoute requireAdmin><UserTypeManagement /></ProtectedRoute>} />
+        <Route path="/admin/branches" element={<ProtectedRoute requireAdmin><BranchManagement /></ProtectedRoute>} />
 
         {/* Catch-all */}
         <Route path="*" element={<Home />} />

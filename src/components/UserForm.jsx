@@ -1,6 +1,7 @@
 import { Upload } from "lucide-react";
 import AccessControlMatrix from "@/components/AccessControlMatrix";
 import { BRANCH_OPTIONS } from "@/lib/userTypes";
+import { getActiveBranchNames } from "@/lib/branches";
 import { buildDefaultPermissions } from "@/lib/screens";
 
 /**
@@ -70,9 +71,9 @@ const UserForm = ({ form, setForm, userTypeOptions, showStatus = true, onSubmit,
         <Field label="Email / Login ID *">
           <input required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={inputCls} />
         </Field>
-        <Field label="Branch">
-          <select value={form.branch} onChange={(e) => setForm({ ...form, branch: e.target.value })} className={inputCls}>
-            {BRANCH_OPTIONS.map((b) => <option key={b}>{b}</option>)}
+        <Field label="Branch *">
+          <select required value={form.branch} onChange={(e) => setForm({ ...form, branch: e.target.value })} className={inputCls}>
+            {(getActiveBranchNames().length ? getActiveBranchNames() : BRANCH_OPTIONS).map((b) => <option key={b}>{b}</option>)}
           </select>
         </Field>
         <Field label="User Type *">

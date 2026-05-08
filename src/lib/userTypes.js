@@ -18,4 +18,8 @@ export const STAFF_USER_TYPE_NAMES = STAFF_USER_TYPES.map((t) => t.name);
 export const isCustomerType = (name) =>
   USER_TYPES.find((t) => t.name === name)?.kind === "customer";
 
-export const BRANCH_OPTIONS = ["Bengaluru", "Mumbai", "Delhi", "Chennai"];
+// Branch options now come from the Branch master (Masters → Branch).
+// Kept as a static fallback; UI should prefer `getActiveBranchNames()` from "@/lib/branches".
+export { getActiveBranchNames as getBranchOptions } from "./branches";
+import { DEFAULT_BRANCHES } from "./branches";
+export const BRANCH_OPTIONS = DEFAULT_BRANCHES.map((b) => b.name);
