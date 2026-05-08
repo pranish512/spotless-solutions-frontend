@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Search, Heart, ShoppingCart, User, Menu, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/store/CartContext";
 
 const navLinks = [
   { label: "New Arrivals", to: "/shop?filter=new" },
@@ -12,6 +13,7 @@ const navLinks = [
 
 const Header = () => {
   const { isAuthenticated, isAdmin, user, logout } = useAuth();
+  const { count: cartCount } = useCart();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -68,7 +70,9 @@ const Header = () => {
               </Link>
               <Link to="/cart" className="p-2 rounded-lg hover:bg-muted transition-colors relative text-foreground">
                 <ShoppingCart className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-secondary text-secondary-foreground text-xs font-bold rounded-full flex items-center justify-center">0</span>
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 bg-secondary text-secondary-foreground text-xs font-bold rounded-full flex items-center justify-center">{cartCount}</span>
+                )}
               </Link>
               <Link to="/user/profile" className="hidden sm:flex items-center gap-1 text-sm font-medium text-foreground hover:text-primary transition-colors">
                 <User className="w-4 h-4" />
@@ -86,6 +90,9 @@ const Header = () => {
               </Link>
               <Link to="/cart" className="p-2 rounded-lg hover:bg-muted transition-colors relative text-foreground">
                 <ShoppingCart className="w-5 h-5" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 bg-secondary text-secondary-foreground text-xs font-bold rounded-full flex items-center justify-center">{cartCount}</span>
+                )}
               </Link>
             </>
           )}
