@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { CartProvider } from "@/store/CartContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 // Public pages
@@ -30,6 +31,7 @@ import OrderManagement from "@/pages/admin/OrderManagement";
 
 const App = () => (
   <AuthProvider>
+    <CartProvider>
     <BrowserRouter>
       <Routes>
         {/* Public Routes */}
@@ -62,6 +64,7 @@ const App = () => (
         <Route path="*" element={<Home />} />
       </Routes>
     </BrowserRouter>
+    </CartProvider>
   </AuthProvider>
 );
 

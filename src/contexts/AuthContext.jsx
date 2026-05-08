@@ -1,4 +1,6 @@
-import { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useContext, useState, useCallback, useEffect } from "react";
+import { authService } from "@/services/authService";
+import { storage, STORAGE_KEYS } from "@/services/storage";
 
 const AuthContext = createContext(null);
 
@@ -9,45 +11,39 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => storage.get(STORAGE_KEYS.AUTH_USER));
   const [loading, setLoading] = useState(false);
 
+  // Persist session across refresh / re-login
+  useEffect(() => {
+    if (user) storage.set(STORAGE_KEYS.AUTH_USER, user);
+    else storage.remove(STORAGE_KEYS.AUTH_USER);
+  }, [user]);
+
   const login = useCallback(async (email, password) => {
-    // TODO: API INTEGRATION -> POST /api/auth/login { email, password } => { user, token, role }
     setLoading(true);
     try {
-      // Simulated response for development
-      const mockUser = {
-        id: "1",
-        email,
-        name: email.split("@")[0],
-        role: email.includes("admin") ? "admin" : "customer",
-      };
-      setUser(mockUser);
-      localStorage.setItem("auth_token", "mock_token");
-      return mockUser;
-    } finally {
-      setLoading(false);
-    }
+      const { user: u, token } = await authService.login(email, password);
+      storage.set(STORAGE_KEYS.AUTH_TOKEN, token);
+      setUser(u);
+      return u;
+    } finally { setLoading(false); }
   }, []);
 
   const register = useCallback(async (name, email, password) => {
-    // TODO: API INTEGRATION -> POST /api/auth/register { name, email, password } => { user, token }
     setLoading(true);
     try {
-      const mockUser = { id: "2", email, name, role: "customer" };
-      setUser(mockUser);
-      localStorage.setItem("auth_token", "mock_token");
-      return mockUser;
-    } finally {
-      setLoading(false);
-    }
+      const { user: u, token } = await authService.register(name, email, password);
+      storage.set(STORAGE_KEYS.AUTH_TOKEN, token);
+      setUser(u);
+      return u;
+    } finally { setLoading(false); }
   }, []);
 
-  const logout = useCallback(() => {
-    // TODO: API INTEGRATION -> POST /api/auth/logout
+  const logout = useCallback(async () => {
+    await authService.logout();
+    storage.remove(STORAGE_KEYS.AUTH_TOKEN);
     setUser(null);
-    localStorage.removeItem("auth_token");
   }, []);
 
   const isAdmin = user?.role === "admin";
