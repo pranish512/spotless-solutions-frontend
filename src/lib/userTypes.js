@@ -18,4 +18,12 @@ export const STAFF_USER_TYPE_NAMES = STAFF_USER_TYPES.map((t) => t.name);
 export const isCustomerType = (name) =>
   USER_TYPES.find((t) => t.name === name)?.kind === "customer";
 
-export const BRANCH_OPTIONS = ["Bengaluru", "Mumbai", "Delhi", "Chennai"];
+// Branch options now come from the Branch master (Masters → Branch).
+import { getActiveBranchNames, DEFAULT_BRANCHES } from "./branches";
+export const BRANCH_OPTIONS = new Proxy([], {
+  get(_t, prop) {
+    const list = getActiveBranchNames();
+    const arr = list.length ? list : DEFAULT_BRANCHES.map((b) => b.name);
+    return arr[prop];
+  },
+});
