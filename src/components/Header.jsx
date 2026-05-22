@@ -20,6 +20,17 @@ const Header = () => {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [offers, setOffers] = useState(() => offersService.listEnabled());
+
+  useEffect(() => {
+    const sync = () => setOffers(offersService.listEnabled());
+    window.addEventListener("offers:updated", sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener("offers:updated", sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
