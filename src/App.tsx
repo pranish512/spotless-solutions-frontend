@@ -69,6 +69,9 @@ const App = () => (
         <Route path="/admin/tags" element={<ProtectedRoute requireAdmin><TagsManagement /></ProtectedRoute>} />
         <Route path="/admin/user-types" element={<ProtectedRoute requireAdmin><UserTypeManagement /></ProtectedRoute>} />
         <Route path="/admin/branches" element={<ProtectedRoute requireAdmin><BranchManagement /></ProtectedRoute>} />
+        <Route path="/admin/policies/about-us" element={<ProtectedRoute requireAdmin><AboutUsEditor /></ProtectedRoute>} />
+        <Route path="/admin/policies/:slug" element={<ProtectedRoute requireAdmin><PolicyEditor /></ProtectedRoute>} />
+
 
         {/* Catch-all */}
         <Route path="*" element={<Home />} />
