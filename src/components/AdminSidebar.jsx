@@ -56,8 +56,44 @@ const AdminSidebar = () => {
     () => policyLinks.some((l) => location.pathname === l.to),
     [location.pathname]
   );
+  const marketingActive = useMemo(
+    () => marketingLinks.some((l) => location.pathname === l.to),
+    [location.pathname]
+  );
+  const contentActive = useMemo(
+    () => contentLinks.some((l) => location.pathname === l.to),
+    [location.pathname]
+  );
   const [mastersOpen, setMastersOpen] = useState(mastersActive);
   const [policiesOpen, setPoliciesOpen] = useState(policiesActive);
+  const [marketingOpen, setMarketingOpen] = useState(marketingActive);
+  const [contentOpen, setContentOpen] = useState(contentActive);
+
+  const Group = ({ label, icon: Icon, items, active, open: groupOpen, setOpen: setGroupOpen }) => (
+    <div className="pt-2">
+      <button
+        type="button"
+        onClick={() => setGroupOpen((v) => !v)}
+        aria-expanded={groupOpen}
+        className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+          active ? "text-nav-foreground" : "text-nav-foreground/70 hover:bg-nav-foreground/10 hover:text-nav-foreground"
+        }`}
+      >
+        <span className="flex items-center gap-3">
+          <Icon className="w-4 h-4 shrink-0" />
+          <span className="truncate">{label}</span>
+        </span>
+        {groupOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+      </button>
+      {groupOpen && (
+        <div className="mt-1 ml-3 pl-3 border-l border-nav-foreground/10 space-y-1">
+          {items.map((link) => (
+            <NavItem key={link.to} link={link} active={location.pathname === link.to} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
 
   const NavItem = ({ link, active }) => (
     <Link
