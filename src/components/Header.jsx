@@ -9,6 +9,7 @@ const navLinks = [
   { label: "Best Sellers", to: "/shop?filter=best" },
   { label: "On Sale", to: "/shop?filter=sale" },
   { label: "All Products", to: "/shop" },
+  { label: "About", to: "/about" },
 ];
 
 const Header = () => {
