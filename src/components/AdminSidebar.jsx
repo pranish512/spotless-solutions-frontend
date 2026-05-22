@@ -42,7 +42,12 @@ const AdminSidebar = () => {
     () => masterLinks.some((l) => location.pathname === l.to),
     [location.pathname]
   );
+  const policiesActive = useMemo(
+    () => policyLinks.some((l) => location.pathname === l.to),
+    [location.pathname]
+  );
   const [mastersOpen, setMastersOpen] = useState(mastersActive);
+  const [policiesOpen, setPoliciesOpen] = useState(policiesActive);
 
   const NavItem = ({ link, active }) => (
     <Link
