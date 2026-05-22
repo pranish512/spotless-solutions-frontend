@@ -162,8 +162,8 @@ const AdminSidebar = () => {
         <span className="w-9" />
       </div>
 
-      {/* Desktop sidebar */}
-      <aside className="hidden lg:flex w-64 shrink-0 min-h-screen bg-nav text-nav-foreground">
+      {/* Desktop sidebar — sticky full-height; inner nav scrolls if items overflow */}
+      <aside className="hidden lg:flex w-64 shrink-0 bg-nav text-nav-foreground self-start sticky top-0 h-screen">
         <SidebarBody />
       </aside>
 
