@@ -11,6 +11,7 @@ const navLinks = [
   { label: "On Sale", to: "/shop?filter=sale" },
   { label: "All Products", to: "/shop" },
   { label: "About", to: "/about" },
+  { label: "Reach Us", to: "/reach-us" },
 ];
 
 const Header = () => {
