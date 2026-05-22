@@ -28,6 +28,13 @@ const Header = () => {
 
   return (
     <header className="sticky top-0 z-40 bg-background border-b border-border">
+      {/* Trust strip */}
+      <div className="bg-primary text-primary-foreground text-xs">
+        <div className="container mx-auto px-4 py-1.5 flex items-center justify-center sm:justify-between gap-4">
+          <span className="font-medium tracking-wide">Free shipping on orders over $49 · Secure checkout</span>
+          <span className="hidden sm:inline opacity-80">Need help? +1 (800) 555-CLEAN</span>
+        </div>
+      </div>
       {/* Top bar */}
       <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
         {/* Logo */}
