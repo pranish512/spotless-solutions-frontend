@@ -33,6 +33,16 @@ const policyLinks = [
   { label: "Payment and Security", to: "/admin/policies/payment-and-security", icon: CreditCard },
 ];
 
+// Marketing group
+const marketingLinks = [
+  { label: "Offers", to: "/admin/marketing/offers", icon: Megaphone },
+];
+
+// Content Management group
+const contentLinks = [
+  { label: "Reach Us", to: "/admin/content/reach-us", icon: MapPin },
+];
+
 const AdminSidebar = () => {
   const location = useLocation();
   const { logout } = useAuth();
