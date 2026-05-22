@@ -13,6 +13,7 @@ import Checkout from "@/pages/public/Checkout";
 import PaymentSuccess from "@/pages/public/PaymentSuccess";
 import AboutUs from "@/pages/public/AboutUs";
 import PolicyPage from "@/pages/public/PolicyPage";
+import ReachUs from "@/pages/public/ReachUs";
 
 // User pages (authenticated)
 import Profile from "@/pages/user/Profile";
