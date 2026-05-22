@@ -47,6 +47,10 @@ const App = () => (
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/payment-success" element={<PaymentSuccess />} />
+        <Route path="/about" element={<AboutUs />} />
+        <Route path="/policies/cookies" element={<PolicyPage slug="cookies-policy" />} />
+        <Route path="/policies/order-cancellation" element={<PolicyPage slug="order-cancellation-policy" />} />
+        <Route path="/policies/payment-security" element={<PolicyPage slug="payment-and-security" />} />
 
         {/* Authenticated User Routes */}
         <Route path="/user/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
