@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Package, FolderTree, Users, LogOut, Tag, UserCog,
   Shield, ShoppingBag, UserCircle, Menu, X, Library, Building2, ChevronDown, ChevronRight,
+  ScrollText, Cookie, Info, Ban, CreditCard,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -22,6 +23,14 @@ const masterLinks = [
   { label: "Tags", to: "/admin/tags", icon: Tag },
   { label: "Branch", to: "/admin/branches", icon: Building2 },
   { label: "Product Category", to: "/admin/categories", icon: FolderTree },
+];
+
+// Policies group — single-record content pages
+const policyLinks = [
+  { label: "Cookies Policy", to: "/admin/policies/cookies-policy", icon: Cookie },
+  { label: "About Us", to: "/admin/policies/about-us", icon: Info },
+  { label: "Order Cancellation Policy", to: "/admin/policies/order-cancellation-policy", icon: Ban },
+  { label: "Payment and Security", to: "/admin/policies/payment-and-security", icon: CreditCard },
 ];
 
 const AdminSidebar = () => {
