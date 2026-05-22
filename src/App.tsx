@@ -11,6 +11,8 @@ import Register from "@/pages/public/Register";
 import Cart from "@/pages/public/Cart";
 import Checkout from "@/pages/public/Checkout";
 import PaymentSuccess from "@/pages/public/PaymentSuccess";
+import AboutUs from "@/pages/public/AboutUs";
+import PolicyPage from "@/pages/public/PolicyPage";
 
 // User pages (authenticated)
 import Profile from "@/pages/user/Profile";
@@ -29,6 +31,8 @@ import TagsManagement from "@/pages/admin/TagsManagement";
 import UserTypeManagement from "@/pages/admin/UserTypeManagement";
 import OrderManagement from "@/pages/admin/OrderManagement";
 import BranchManagement from "@/pages/admin/BranchManagement";
+import PolicyEditor from "@/pages/admin/PolicyEditor";
+import AboutUsEditor from "@/pages/admin/AboutUsEditor";
 
 const App = () => (
   <AuthProvider>
@@ -43,6 +47,10 @@ const App = () => (
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/payment-success" element={<PaymentSuccess />} />
+        <Route path="/about" element={<AboutUs />} />
+        <Route path="/policies/cookies" element={<PolicyPage slug="cookies-policy" />} />
+        <Route path="/policies/order-cancellation" element={<PolicyPage slug="order-cancellation-policy" />} />
+        <Route path="/policies/payment-security" element={<PolicyPage slug="payment-and-security" />} />
 
         {/* Authenticated User Routes */}
         <Route path="/user/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
@@ -61,6 +69,9 @@ const App = () => (
         <Route path="/admin/tags" element={<ProtectedRoute requireAdmin><TagsManagement /></ProtectedRoute>} />
         <Route path="/admin/user-types" element={<ProtectedRoute requireAdmin><UserTypeManagement /></ProtectedRoute>} />
         <Route path="/admin/branches" element={<ProtectedRoute requireAdmin><BranchManagement /></ProtectedRoute>} />
+        <Route path="/admin/policies/about-us" element={<ProtectedRoute requireAdmin><AboutUsEditor /></ProtectedRoute>} />
+        <Route path="/admin/policies/:slug" element={<ProtectedRoute requireAdmin><PolicyEditor /></ProtectedRoute>} />
+
 
         {/* Catch-all */}
         <Route path="*" element={<Home />} />

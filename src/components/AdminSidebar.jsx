@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Package, FolderTree, Users, LogOut, Tag, UserCog,
   Shield, ShoppingBag, UserCircle, Menu, X, Library, Building2, ChevronDown, ChevronRight,
+  ScrollText, Cookie, Info, Ban, CreditCard,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -24,6 +25,14 @@ const masterLinks = [
   { label: "Product Category", to: "/admin/categories", icon: FolderTree },
 ];
 
+// Policies group — single-record content pages
+const policyLinks = [
+  { label: "Cookies Policy", to: "/admin/policies/cookies-policy", icon: Cookie },
+  { label: "About Us", to: "/admin/policies/about-us", icon: Info },
+  { label: "Order Cancellation Policy", to: "/admin/policies/order-cancellation-policy", icon: Ban },
+  { label: "Payment and Security", to: "/admin/policies/payment-and-security", icon: CreditCard },
+];
+
 const AdminSidebar = () => {
   const location = useLocation();
   const { logout } = useAuth();
@@ -33,7 +42,12 @@ const AdminSidebar = () => {
     () => masterLinks.some((l) => location.pathname === l.to),
     [location.pathname]
   );
+  const policiesActive = useMemo(
+    () => policyLinks.some((l) => location.pathname === l.to),
+    [location.pathname]
+  );
   const [mastersOpen, setMastersOpen] = useState(mastersActive);
+  const [policiesOpen, setPoliciesOpen] = useState(policiesActive);
 
   const NavItem = ({ link, active }) => (
     <Link
@@ -91,6 +105,33 @@ const AdminSidebar = () => {
           {mastersOpen && (
             <div className="mt-1 ml-3 pl-3 border-l border-nav-foreground/10 space-y-1">
               {masterLinks.map((link) => (
+                <NavItem key={link.to} link={link} active={location.pathname === link.to} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Policies group */}
+        <div className="pt-2">
+          <button
+            type="button"
+            onClick={() => setPoliciesOpen((v) => !v)}
+            aria-expanded={policiesOpen}
+            className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              policiesActive
+                ? "text-nav-foreground"
+                : "text-nav-foreground/70 hover:bg-nav-foreground/10 hover:text-nav-foreground"
+            }`}
+          >
+            <span className="flex items-center gap-3">
+              <ScrollText className="w-4 h-4 shrink-0" />
+              <span className="truncate">Policies</span>
+            </span>
+            {policiesOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+          </button>
+          {policiesOpen && (
+            <div className="mt-1 ml-3 pl-3 border-l border-nav-foreground/10 space-y-1">
+              {policyLinks.map((link) => (
                 <NavItem key={link.to} link={link} active={location.pathname === link.to} />
               ))}
             </div>
