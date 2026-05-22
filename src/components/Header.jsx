@@ -41,13 +41,19 @@ const Header = () => {
 
   return (
     <header className="sticky top-0 z-40 bg-background border-b border-border">
-      {/* Trust strip */}
-      <div className="bg-primary text-primary-foreground text-xs">
-        <div className="container mx-auto px-4 py-1.5 flex items-center justify-center sm:justify-between gap-4">
-          <span className="font-medium tracking-wide">Free shipping on orders over $49 · Secure checkout</span>
-          <span className="hidden sm:inline opacity-80">Need help? +1 (800) 555-CLEAN</span>
+      {/* Promotional offers banner — dynamic, admin-managed, responsive */}
+      {offers.length > 0 && (
+        <div className="bg-primary text-primary-foreground text-xs">
+          <div className="container mx-auto px-4 py-1.5 flex flex-wrap items-center justify-center gap-x-6 gap-y-1">
+            {offers.map((o) => (
+              <span key={o.id} className="font-medium tracking-wide text-center break-words max-w-full">
+                {o.title}
+                {o.description ? <span className="opacity-80"> · {o.description}</span> : null}
+              </span>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
       {/* Top bar */}
       <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
         {/* Logo */}
