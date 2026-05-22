@@ -75,6 +75,8 @@ const App = () => (
         <Route path="/admin/branches" element={<ProtectedRoute requireAdmin><BranchManagement /></ProtectedRoute>} />
         <Route path="/admin/policies/about-us" element={<ProtectedRoute requireAdmin><AboutUsEditor /></ProtectedRoute>} />
         <Route path="/admin/policies/:slug" element={<ProtectedRoute requireAdmin><PolicyEditor /></ProtectedRoute>} />
+        <Route path="/admin/marketing/offers" element={<ProtectedRoute requireAdmin><OffersManagement /></ProtectedRoute>} />
+        <Route path="/admin/content/reach-us" element={<ProtectedRoute requireAdmin><ReachUsEditor /></ProtectedRoute>} />
 
 
         {/* Catch-all */}
