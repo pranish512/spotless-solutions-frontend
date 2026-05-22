@@ -31,6 +31,8 @@ import TagsManagement from "@/pages/admin/TagsManagement";
 import UserTypeManagement from "@/pages/admin/UserTypeManagement";
 import OrderManagement from "@/pages/admin/OrderManagement";
 import BranchManagement from "@/pages/admin/BranchManagement";
+import PolicyEditor from "@/pages/admin/PolicyEditor";
+import AboutUsEditor from "@/pages/admin/AboutUsEditor";
 
 const App = () => (
   <AuthProvider>
