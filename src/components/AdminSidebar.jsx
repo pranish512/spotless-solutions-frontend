@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Package, FolderTree, Users, LogOut, Tag, UserCog,
   Shield, ShoppingBag, UserCircle, Menu, X, Library, Building2, ChevronDown, ChevronRight,
-  ScrollText, Cookie, Info, Ban, CreditCard,
+  ScrollText, Cookie, Info, Ban, CreditCard, Megaphone, FileText, MapPin, Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -33,6 +33,16 @@ const policyLinks = [
   { label: "Payment and Security", to: "/admin/policies/payment-and-security", icon: CreditCard },
 ];
 
+// Marketing group
+const marketingLinks = [
+  { label: "Offers", to: "/admin/marketing/offers", icon: Megaphone },
+];
+
+// Content Management group
+const contentLinks = [
+  { label: "Reach Us", to: "/admin/content/reach-us", icon: MapPin },
+];
+
 const AdminSidebar = () => {
   const location = useLocation();
   const { logout } = useAuth();
@@ -46,8 +56,44 @@ const AdminSidebar = () => {
     () => policyLinks.some((l) => location.pathname === l.to),
     [location.pathname]
   );
+  const marketingActive = useMemo(
+    () => marketingLinks.some((l) => location.pathname === l.to),
+    [location.pathname]
+  );
+  const contentActive = useMemo(
+    () => contentLinks.some((l) => location.pathname === l.to),
+    [location.pathname]
+  );
   const [mastersOpen, setMastersOpen] = useState(mastersActive);
   const [policiesOpen, setPoliciesOpen] = useState(policiesActive);
+  const [marketingOpen, setMarketingOpen] = useState(marketingActive);
+  const [contentOpen, setContentOpen] = useState(contentActive);
+
+  const Group = ({ label, icon: Icon, items, active, open: groupOpen, setOpen: setGroupOpen }) => (
+    <div className="pt-2">
+      <button
+        type="button"
+        onClick={() => setGroupOpen((v) => !v)}
+        aria-expanded={groupOpen}
+        className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+          active ? "text-nav-foreground" : "text-nav-foreground/70 hover:bg-nav-foreground/10 hover:text-nav-foreground"
+        }`}
+      >
+        <span className="flex items-center gap-3">
+          <Icon className="w-4 h-4 shrink-0" />
+          <span className="truncate">{label}</span>
+        </span>
+        {groupOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+      </button>
+      {groupOpen && (
+        <div className="mt-1 ml-3 pl-3 border-l border-nav-foreground/10 space-y-1">
+          {items.map((link) => (
+            <NavItem key={link.to} link={link} active={location.pathname === link.to} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
 
   const NavItem = ({ link, active }) => (
     <Link
@@ -84,61 +130,12 @@ const AdminSidebar = () => {
           <NavItem key={link.to} link={link} active={location.pathname === link.to} />
         ))}
 
-        {/* Masters group */}
-        <div className="pt-2">
-          <button
-            type="button"
-            onClick={() => setMastersOpen((v) => !v)}
-            aria-expanded={mastersOpen}
-            className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-              mastersActive
-                ? "text-nav-foreground"
-                : "text-nav-foreground/70 hover:bg-nav-foreground/10 hover:text-nav-foreground"
-            }`}
-          >
-            <span className="flex items-center gap-3">
-              <Library className="w-4 h-4 shrink-0" />
-              <span className="truncate">Masters</span>
-            </span>
-            {mastersOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-          </button>
-          {mastersOpen && (
-            <div className="mt-1 ml-3 pl-3 border-l border-nav-foreground/10 space-y-1">
-              {masterLinks.map((link) => (
-                <NavItem key={link.to} link={link} active={location.pathname === link.to} />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Policies group */}
-        <div className="pt-2">
-          <button
-            type="button"
-            onClick={() => setPoliciesOpen((v) => !v)}
-            aria-expanded={policiesOpen}
-            className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-              policiesActive
-                ? "text-nav-foreground"
-                : "text-nav-foreground/70 hover:bg-nav-foreground/10 hover:text-nav-foreground"
-            }`}
-          >
-            <span className="flex items-center gap-3">
-              <ScrollText className="w-4 h-4 shrink-0" />
-              <span className="truncate">Policies</span>
-            </span>
-            {policiesOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-          </button>
-          {policiesOpen && (
-            <div className="mt-1 ml-3 pl-3 border-l border-nav-foreground/10 space-y-1">
-              {policyLinks.map((link) => (
-                <NavItem key={link.to} link={link} active={location.pathname === link.to} />
-              ))}
-            </div>
-          )}
-        </div>
+        <Group label="Masters" icon={Library} items={masterLinks} active={mastersActive} open={mastersOpen} setOpen={setMastersOpen} />
+        <Group label="Marketing" icon={Sparkles} items={marketingLinks} active={marketingActive} open={marketingOpen} setOpen={setMarketingOpen} />
+        <Group label="Content Management" icon={FileText} items={contentLinks} active={contentActive} open={contentOpen} setOpen={setContentOpen} />
+        <Group label="Policies" icon={ScrollText} items={policyLinks} active={policiesActive} open={policiesOpen} setOpen={setPoliciesOpen} />
       </nav>
-      <div className="p-4 border-t border-nav-foreground/10">
+      <div className="p-4 border-t border-nav-foreground/10 shrink-0">
         <button
           onClick={logout}
           className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-nav-foreground/70 hover:bg-nav-foreground/10 hover:text-nav-foreground transition-colors w-full"
@@ -165,8 +162,8 @@ const AdminSidebar = () => {
         <span className="w-9" />
       </div>
 
-      {/* Desktop sidebar */}
-      <aside className="hidden lg:flex w-64 shrink-0 min-h-screen bg-nav text-nav-foreground">
+      {/* Desktop sidebar — sticky full-height; inner nav scrolls if items overflow */}
+      <aside className="hidden lg:flex w-64 shrink-0 bg-nav text-nav-foreground self-start sticky top-0 h-screen">
         <SidebarBody />
       </aside>
 
