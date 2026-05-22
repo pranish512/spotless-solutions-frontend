@@ -11,6 +11,8 @@ import Register from "@/pages/public/Register";
 import Cart from "@/pages/public/Cart";
 import Checkout from "@/pages/public/Checkout";
 import PaymentSuccess from "@/pages/public/PaymentSuccess";
+import AboutUs from "@/pages/public/AboutUs";
+import PolicyPage from "@/pages/public/PolicyPage";
 
 // User pages (authenticated)
 import Profile from "@/pages/user/Profile";
