@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Package, FolderTree, Users, LogOut, Tag, UserCog,
   Shield, ShoppingBag, UserCircle, Menu, X, Library, Building2, ChevronDown, ChevronRight,
-  ScrollText, Cookie, Info, Ban, CreditCard,
+  ScrollText, Cookie, Info, Ban, CreditCard, Megaphone, FileText, MapPin, Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
