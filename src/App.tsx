@@ -34,6 +34,8 @@ import OrderManagement from "@/pages/admin/OrderManagement";
 import BranchManagement from "@/pages/admin/BranchManagement";
 import PolicyEditor from "@/pages/admin/PolicyEditor";
 import AboutUsEditor from "@/pages/admin/AboutUsEditor";
+import OffersManagement from "@/pages/admin/OffersManagement";
+import ReachUsEditor from "@/pages/admin/ReachUsEditor";
 
 const App = () => (
   <AuthProvider>
