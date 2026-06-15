@@ -16,7 +16,7 @@ const Login = () => {
     try {
       // TODO: API INTEGRATION -> POST /api/auth/login { email, password } => { user: { id, name, email, role }, token }
       const user = await login(email, password);
-      if (user.role === "admin") {
+      if ((user.roles || []).includes("admin") || (user.roles || []).includes("staff")) {
         navigate("/admin/dashboard", { replace: true });
       } else {
         navigate("/", { replace: true });

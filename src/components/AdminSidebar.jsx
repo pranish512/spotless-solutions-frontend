@@ -9,20 +9,20 @@ import { useAuth } from "@/contexts/AuthContext";
 
 // Top-level (non-master) entries
 const topLinks = [
-  { label: "Dashboard", to: "/admin/dashboard", icon: LayoutDashboard },
-  { label: "Orders", to: "/admin/orders", icon: ShoppingBag },
-  { label: "Products", to: "/admin/products", icon: Package },
-  { label: "Users", to: "/admin/users", icon: Users },
-  { label: "Staff", to: "/admin/staff", icon: Shield },
-  { label: "Profile", to: "/admin/profile", icon: UserCircle },
+  { label: "Dashboard", to: "/admin/dashboard", icon: LayoutDashboard, screen: "dashboard" },
+  { label: "Orders", to: "/admin/orders", icon: ShoppingBag, screen: "orders" },
+  { label: "Products", to: "/admin/products", icon: Package, screen: "products" },
+  { label: "Users", to: "/admin/users", icon: Users, screen: "users" },
+  { label: "Staff", to: "/admin/staff", icon: Shield, screen: "staff" },
+  { label: "Profile", to: "/admin/profile", icon: UserCircle, screen: "settings" },
 ];
 
 // Masters group — lightweight configuration screens
 const masterLinks = [
-  { label: "User Type", to: "/admin/user-types", icon: UserCog },
-  { label: "Tags", to: "/admin/tags", icon: Tag },
-  { label: "Branch", to: "/admin/branches", icon: Building2 },
-  { label: "Product Category", to: "/admin/categories", icon: FolderTree },
+  { label: "User Type", to: "/admin/user-types", icon: UserCog, screen: "user_types" },
+  { label: "Tags", to: "/admin/tags", icon: Tag, screen: "tags" },
+  { label: "Branch", to: "/admin/branches", icon: Building2, screen: "branches" },
+  { label: "Product Category", to: "/admin/categories", icon: FolderTree, screen: "categories" },
 ];
 
 // Policies group — single-record content pages
@@ -45,12 +45,15 @@ const contentLinks = [
 
 const AdminSidebar = () => {
   const location = useLocation();
-  const { logout } = useAuth();
+  const { logout, isAdmin, can } = useAuth();
   const [open, setOpen] = useState(false);
+  const canView = (link) => isAdmin || !link.screen || can(link.screen, "read");
+  const visibleTopLinks = topLinks.filter(canView);
+  const visibleMasterLinks = masterLinks.filter(canView);
 
   const mastersActive = useMemo(
-    () => masterLinks.some((l) => location.pathname === l.to),
-    [location.pathname]
+    () => visibleMasterLinks.some((l) => location.pathname === l.to),
+    [location.pathname, visibleMasterLinks]
   );
   const policiesActive = useMemo(
     () => policyLinks.some((l) => location.pathname === l.to),
@@ -126,11 +129,13 @@ const AdminSidebar = () => {
         </button>
       </div>
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {topLinks.map((link) => (
+        {visibleTopLinks.map((link) => (
           <NavItem key={link.to} link={link} active={location.pathname === link.to} />
         ))}
 
-        <Group label="Masters" icon={Library} items={masterLinks} active={mastersActive} open={mastersOpen} setOpen={setMastersOpen} />
+        {visibleMasterLinks.length > 0 && (
+          <Group label="Masters" icon={Library} items={visibleMasterLinks} active={mastersActive} open={mastersOpen} setOpen={setMastersOpen} />
+        )}
         <Group label="Marketing" icon={Sparkles} items={marketingLinks} active={marketingActive} open={marketingOpen} setOpen={setMarketingOpen} />
         <Group label="Content Management" icon={FileText} items={contentLinks} active={contentActive} open={contentOpen} setOpen={setContentOpen} />
         <Group label="Policies" icon={ScrollText} items={policyLinks} active={policiesActive} open={policiesOpen} setOpen={setPoliciesOpen} />
