@@ -11,7 +11,9 @@ const screenByPath = {
   "/admin/tags": "tags",
   "/admin/user-types": "user_types",
   "/admin/branches": "branches",
-  "/admin/services": "services",
+  // Services module reuses the "products" screen key because the backend
+  // AppScreenEnum does not (yet) include a dedicated "services" entry.
+  "/admin/services": "products",
   "/admin/profile": "settings",
 };
 
