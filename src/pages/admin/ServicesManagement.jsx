@@ -3,15 +3,18 @@ import AdminSidebar from "@/components/AdminSidebar";
 import ResponsiveModal from "@/components/ResponsiveModal";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import ToggleSwitch from "@/components/ToggleSwitch";
+import RichTextEditor from "@/components/RichTextEditor";
+import RichTextRenderer from "@/components/RichTextRenderer";
+import ImageUploadField from "@/components/ImageUploadField";
 import { Plus, Pencil, Trash2, Search, Upload, FileText, ImageIcon } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { loadServices, saveServices, makeServiceSlug } from "@/lib/services";
 import { adminServicesService } from "@/services/adminServicesService";
+import { fileToDataUrl } from "@/lib/imageValidation";
 
-const MAX_DESC = 600;
 const MAX_BROCHURE_MB = 20;
-const MAX_IMAGE_MB = 5;
-const IMAGE_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+
+const stripHtml = (html) => (html || "").replace(/<[^>]*>/g, "").trim();
 
 const emptyForm = {
   name: "",
@@ -23,14 +26,6 @@ const emptyForm = {
   brochureFile: null,
   status: "Active",
 };
-
-const fileToDataUrl = (file) =>
-  new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(r.result);
-    r.onerror = reject;
-    r.readAsDataURL(file);
-  });
 
 const ServicesManagement = () => {
   const { can, isAdmin } = useAuth();
