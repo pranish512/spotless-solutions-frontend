@@ -14,6 +14,8 @@ import PaymentSuccess from "@/pages/public/PaymentSuccess";
 import AboutUs from "@/pages/public/AboutUs";
 import PolicyPage from "@/pages/public/PolicyPage";
 import ReachUs from "@/pages/public/ReachUs";
+import Services from "@/pages/public/Services";
+import ServiceDetail from "@/pages/public/ServiceDetail";
 
 // User pages (authenticated)
 import Profile from "@/pages/user/Profile";
@@ -36,6 +38,7 @@ import PolicyEditor from "@/pages/admin/PolicyEditor";
 import AboutUsEditor from "@/pages/admin/AboutUsEditor";
 import OffersManagement from "@/pages/admin/OffersManagement";
 import ReachUsEditor from "@/pages/admin/ReachUsEditor";
+import ServicesManagement from "@/pages/admin/ServicesManagement";
 
 const App = () => (
   <AuthProvider>
@@ -52,6 +55,8 @@ const App = () => (
         <Route path="/payment-success" element={<PaymentSuccess />} />
         <Route path="/about" element={<AboutUs />} />
         <Route path="/reach-us" element={<ReachUs />} />
+        <Route path="/services" element={<Services />} />
+        <Route path="/services/:slug" element={<ServiceDetail />} />
         <Route path="/policies/cookies" element={<PolicyPage slug="cookies-policy" />} />
         <Route path="/policies/order-cancellation" element={<PolicyPage slug="order-cancellation-policy" />} />
         <Route path="/policies/payment-security" element={<PolicyPage slug="payment-and-security" />} />
@@ -77,6 +82,7 @@ const App = () => (
         <Route path="/admin/policies/:slug" element={<ProtectedRoute requireAdmin><PolicyEditor /></ProtectedRoute>} />
         <Route path="/admin/marketing/offers" element={<ProtectedRoute requireAdmin><OffersManagement /></ProtectedRoute>} />
         <Route path="/admin/content/reach-us" element={<ProtectedRoute requireAdmin><ReachUsEditor /></ProtectedRoute>} />
+        <Route path="/admin/services" element={<ProtectedRoute requireAdmin><ServicesManagement /></ProtectedRoute>} />
 
 
         {/* Catch-all */}

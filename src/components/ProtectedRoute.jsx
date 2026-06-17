@@ -11,6 +11,7 @@ const screenByPath = {
   "/admin/tags": "tags",
   "/admin/user-types": "user_types",
   "/admin/branches": "branches",
+  "/admin/services": "services",
   "/admin/profile": "settings",
 };
 

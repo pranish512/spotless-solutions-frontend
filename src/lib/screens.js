@@ -10,6 +10,7 @@ export const APP_SCREENS = [
   { key: "branches", label: "Branches" },
   { key: "staff", label: "Staff" },
   { key: "orders", label: "Orders" },
+  { key: "services", label: "Services" },
   { key: "reports", label: "Reports" },
   { key: "settings", label: "Settings" },
 ];

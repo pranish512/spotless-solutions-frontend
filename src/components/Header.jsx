@@ -10,6 +10,7 @@ const navLinks = [
   { label: "Best Sellers", to: "/shop?filter=best" },
   { label: "On Sale", to: "/shop?filter=sale" },
   { label: "All Products", to: "/shop" },
+  { label: "Services", to: "/services" },
   { label: "About", to: "/about" },
   { label: "Reach Us", to: "/reach-us" },
 ];

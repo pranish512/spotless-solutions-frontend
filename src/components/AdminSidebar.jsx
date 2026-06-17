@@ -12,6 +12,7 @@ const topLinks = [
   { label: "Dashboard", to: "/admin/dashboard", icon: LayoutDashboard, screen: "dashboard" },
   { label: "Orders", to: "/admin/orders", icon: ShoppingBag, screen: "orders" },
   { label: "Products", to: "/admin/products", icon: Package, screen: "products" },
+  { label: "Services", to: "/admin/services", icon: Sparkles, screen: "services" },
   { label: "Users", to: "/admin/users", icon: Users, screen: "users" },
   { label: "Staff", to: "/admin/staff", icon: Shield, screen: "staff" },
   { label: "Profile", to: "/admin/profile", icon: UserCircle, screen: "settings" },
