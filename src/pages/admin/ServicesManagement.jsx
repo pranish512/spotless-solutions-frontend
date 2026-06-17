@@ -40,7 +40,7 @@ const ServicesManagement = () => {
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const imgRef = useRef(null);
+  // image input is managed inside ImageUploadField
   const pdfRef = useRef(null);
 
   useEffect(() => { saveServices(items); }, [items]);
