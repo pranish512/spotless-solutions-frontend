@@ -3,7 +3,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CategoryCircle from "@/components/CategoryCircle";
 import ProductCard from "@/components/ProductCard";
-import heroBanner from "@/assets/hero-banner.jpg";
+import heroBanner from "@/assets/hero-cleaning-services.jpg";
 import catLiquids from "@/assets/cat-liquids.png";
 import catGloves from "@/assets/cat-gloves.png";
 import catMasks from "@/assets/cat-masks.png";
