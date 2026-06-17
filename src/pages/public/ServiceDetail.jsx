@@ -2,11 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import RichTextRenderer from "@/components/RichTextRenderer";
 import {
   Download, FileText, ShieldCheck, Users, BadgeCheck, Headphones,
   CheckCircle2, ArrowRight, Phone, Mail, MessageSquare, Building2, Factory, GraduationCap, Hospital,
 } from "lucide-react";
 import { getActiveServices, getServiceBySlug } from "@/lib/services";
+
+const stripHtml = (html) => (html || "").replace(/<[^>]*>/g, "").trim();
 
 const HERO_BG =
   "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=1920&q=80";
