@@ -94,7 +94,7 @@ const ServiceDetail = () => {
                 <span className="text-white">{service.name}</span>
               </nav>
               <h1 className="font-display font-bold text-3xl sm:text-4xl lg:text-5xl tracking-tight">{service.name}</h1>
-              <p className="mt-5 text-white/85 text-base sm:text-lg leading-relaxed line-clamp-5">{service.description}</p>
+              <p className="mt-5 text-white/85 text-base sm:text-lg leading-relaxed line-clamp-5">{stripHtml(service.description)}</p>
 
               <ul className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-sm">
                 {["Trained & uniformed staff", "Modern equipment", "Hospital-grade chemicals", "Transparent SLAs"].map((b) => (
