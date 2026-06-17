@@ -243,7 +243,7 @@ const ServiceDetail = () => {
                     </div>
                     <div className="p-5">
                       <h3 className="font-display font-bold text-base text-foreground group-hover:text-primary transition-colors">{s.name}</h3>
-                      <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2">{s.description}</p>
+                      <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2">{stripHtml(s.description)}</p>
                     </div>
                   </Link>
                 ))}
