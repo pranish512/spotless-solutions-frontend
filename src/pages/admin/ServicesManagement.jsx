@@ -194,7 +194,7 @@ const ServicesManagement = () => {
                       )}
                     </td>
                     <td className="px-4 py-3 text-sm font-medium">{s.name}</td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground max-w-md truncate">{s.description}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground max-w-md truncate">{stripHtml(s.description)}</td>
                     <td className="px-4 py-3 text-sm text-muted-foreground">
                       {s.brochureName ? (
                         <span className="inline-flex items-center gap-1.5"><FileText className="w-4 h-4 text-primary" /> {s.brochureName}</span>
