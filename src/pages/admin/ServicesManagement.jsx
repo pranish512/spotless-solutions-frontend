@@ -228,29 +228,25 @@ const ServicesManagement = () => {
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="block text-sm font-medium text-foreground">Description *</label>
-                <span className={`text-xs ${form.description.length > MAX_DESC ? "text-destructive" : "text-muted-foreground"}`}>
-                  {form.description.length}/{MAX_DESC}
-                </span>
-              </div>
-              <textarea required rows={5} maxLength={MAX_DESC} value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body resize-none" />
+              <label className="block text-sm font-medium text-foreground mb-1">Description *</label>
+              <RichTextEditor
+                value={form.description}
+                onChange={(html) => setForm({ ...form, description: html })}
+                placeholder="Describe the service, scope and benefits…"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Use bold, italic, headings, lists and alignment to keep your content clear and scannable.
+              </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Service Image *</label>
-                <input ref={imgRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden"
-                  onChange={(e) => handleImage(e.target.files?.[0])} />
-                <button type="button" onClick={() => imgRef.current?.click()}
-                  className="w-full h-11 px-4 rounded-lg border border-dashed border-border bg-background hover:bg-muted/50 flex items-center justify-center gap-2 text-sm">
-                  <Upload className="w-4 h-4" /> {form.image ? "Change image" : "Upload image"}
-                </button>
-                {form.image && <img src={form.image} alt="preview" className="mt-2 w-full h-32 object-cover rounded-lg border border-border" />}
-                <p className="text-xs text-muted-foreground mt-1">PNG / JPG / WEBP · max {MAX_IMAGE_MB} MB</p>
-              </div>
+              <ImageUploadField
+                label="Service Image"
+                required
+                presetKey="service"
+                value={form.image}
+                onChange={(file, dataUrl) => setForm((f) => ({ ...f, image: dataUrl, imageFile: file }))}
+              />
 
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">Brochure (PDF)</label>
