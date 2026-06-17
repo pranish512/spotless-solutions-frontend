@@ -152,7 +152,7 @@ const ServiceDetail = () => {
             <div className="lg:col-span-2">
               <p className="text-xs font-semibold tracking-[0.18em] text-primary uppercase">About this service</p>
               <h2 className="font-display font-bold text-3xl text-foreground mt-2">Detailed Overview</h2>
-              <p className="mt-5 text-foreground/80 leading-relaxed">{service.description}</p>
+              <div className="mt-5"><RichTextRenderer html={service.description} /></div>
 
               <h3 className="font-display font-bold text-lg text-foreground mt-8 mb-3">Service Scope</h3>
               <ul className="space-y-2.5 text-sm text-foreground/85">
