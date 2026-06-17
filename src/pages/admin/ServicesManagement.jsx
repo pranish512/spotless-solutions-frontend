@@ -85,15 +85,6 @@ const ServicesManagement = () => {
     setShowModal(true);
   };
 
-  const handleImage = async (file) => {
-    if (!file) return;
-    if (!IMAGE_TYPES.includes(file.type)) { setError("Image must be PNG, JPG or WEBP."); return; }
-    if (file.size > MAX_IMAGE_MB * 1024 * 1024) { setError(`Image must be under ${MAX_IMAGE_MB} MB.`); return; }
-    const url = await fileToDataUrl(file);
-    setForm((f) => ({ ...f, image: url, imageFile: file }));
-    setError("");
-  };
-
   const handleBrochure = async (file) => {
     if (!file) return;
     if (file.type !== "application/pdf") { setError("Brochure must be a PDF file."); return; }
@@ -107,9 +98,9 @@ const ServicesManagement = () => {
     e.preventDefault();
     setError("");
     if (!form.name.trim()) return setError("Service name is required.");
-    if (!form.description.trim()) return setError("Description is required.");
+    if (!stripHtml(form.description)) return setError("Description is required.");
     if (!form.image) return setError("Service image is required.");
-    if (form.description.length > MAX_DESC) return setError(`Description must be ${MAX_DESC} characters or fewer.`);
+
 
     const slug = makeServiceSlug(form.name);
     try {
