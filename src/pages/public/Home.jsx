@@ -3,7 +3,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CategoryCircle from "@/components/CategoryCircle";
 import ProductCard from "@/components/ProductCard";
-import heroBanner from "@/assets/hero-banner.jpg";
+import heroBanner from "@/assets/hero-cleaning-services.jpg";
 import catLiquids from "@/assets/cat-liquids.png";
 import catGloves from "@/assets/cat-gloves.png";
 import catMasks from "@/assets/cat-masks.png";
@@ -38,21 +38,40 @@ const Home = () => {
       <Header />
       
       {/* Hero */}
-      <section className="relative h-[400px] md:h-[480px] overflow-hidden">
-        <img src={heroBanner} alt="Cleaning supplies" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-foreground/50 flex items-center">
+      <section className="relative h-[440px] md:h-[540px] overflow-hidden">
+        <img
+          src={heroBanner}
+          alt="Professional Spotless Solutions cleaning crew servicing a corporate lobby"
+          className="w-full h-full object-cover"
+          width={1920}
+          height={1080}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-foreground/85 via-foreground/60 to-transparent flex items-center">
           <div className="container mx-auto px-4">
-            <div className="max-w-lg animate-fade-in">
-              <h2 className="font-display font-extrabold text-4xl md:text-5xl text-background leading-tight mb-4">
-                Spotless Home,<br />Happy Life
-              </h2>
-              <p className="text-background/80 text-lg mb-6">Premium cleaning supplies at wholesale prices. Up to 50% off on all categories.</p>
-              <Link
-                to="/shop"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-secondary text-secondary-foreground font-display font-bold text-sm hover:opacity-90 transition-opacity"
-              >
-                Shop Now
-              </Link>
+            <div className="max-w-xl animate-fade-in">
+              <span className="inline-block px-3 py-1 rounded-full bg-primary/15 text-primary text-xs font-semibold tracking-wider uppercase mb-4">
+                Trusted Cleaning Partner
+              </span>
+              <h1 className="font-display font-extrabold text-4xl md:text-5xl lg:text-6xl text-background leading-tight mb-5">
+                Spotless Spaces,<br />Healthier Living
+              </h1>
+              <p className="text-background/85 text-base md:text-lg mb-7 leading-relaxed">
+                Premium cleaning supplies and professional hygiene services trusted by homes, offices and industries — delivered with quality, safety and care.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  to="/shop"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-secondary text-secondary-foreground font-display font-bold text-sm hover:opacity-90 transition-opacity"
+                >
+                  Shop Supplies
+                </Link>
+                <Link
+                  to="/services"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-background/10 backdrop-blur border border-background/30 text-background font-display font-bold text-sm hover:bg-background/20 transition-colors"
+                >
+                  Explore Services
+                </Link>
+              </div>
             </div>
           </div>
         </div>

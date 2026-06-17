@@ -3,15 +3,18 @@ import AdminSidebar from "@/components/AdminSidebar";
 import ResponsiveModal from "@/components/ResponsiveModal";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import ToggleSwitch from "@/components/ToggleSwitch";
+import RichTextEditor from "@/components/RichTextEditor";
+import RichTextRenderer from "@/components/RichTextRenderer";
+import ImageUploadField from "@/components/ImageUploadField";
 import { Plus, Pencil, Trash2, Search, Upload, FileText, ImageIcon } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { loadServices, saveServices, makeServiceSlug } from "@/lib/services";
 import { adminServicesService } from "@/services/adminServicesService";
+import { fileToDataUrl } from "@/lib/imageValidation";
 
-const MAX_DESC = 600;
 const MAX_BROCHURE_MB = 20;
-const MAX_IMAGE_MB = 5;
-const IMAGE_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+
+const stripHtml = (html) => (html || "").replace(/<[^>]*>/g, "").trim();
 
 const emptyForm = {
   name: "",
@@ -23,14 +26,6 @@ const emptyForm = {
   brochureFile: null,
   status: "Active",
 };
-
-const fileToDataUrl = (file) =>
-  new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(r.result);
-    r.onerror = reject;
-    r.readAsDataURL(file);
-  });
 
 const ServicesManagement = () => {
   const { can, isAdmin } = useAuth();
@@ -45,7 +40,7 @@ const ServicesManagement = () => {
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const imgRef = useRef(null);
+  // image input is managed inside ImageUploadField
   const pdfRef = useRef(null);
 
   useEffect(() => { saveServices(items); }, [items]);
@@ -90,15 +85,6 @@ const ServicesManagement = () => {
     setShowModal(true);
   };
 
-  const handleImage = async (file) => {
-    if (!file) return;
-    if (!IMAGE_TYPES.includes(file.type)) { setError("Image must be PNG, JPG or WEBP."); return; }
-    if (file.size > MAX_IMAGE_MB * 1024 * 1024) { setError(`Image must be under ${MAX_IMAGE_MB} MB.`); return; }
-    const url = await fileToDataUrl(file);
-    setForm((f) => ({ ...f, image: url, imageFile: file }));
-    setError("");
-  };
-
   const handleBrochure = async (file) => {
     if (!file) return;
     if (file.type !== "application/pdf") { setError("Brochure must be a PDF file."); return; }
@@ -112,9 +98,9 @@ const ServicesManagement = () => {
     e.preventDefault();
     setError("");
     if (!form.name.trim()) return setError("Service name is required.");
-    if (!form.description.trim()) return setError("Description is required.");
+    if (!stripHtml(form.description)) return setError("Description is required.");
     if (!form.image) return setError("Service image is required.");
-    if (form.description.length > MAX_DESC) return setError(`Description must be ${MAX_DESC} characters or fewer.`);
+
 
     const slug = makeServiceSlug(form.name);
     try {
@@ -208,7 +194,7 @@ const ServicesManagement = () => {
                       )}
                     </td>
                     <td className="px-4 py-3 text-sm font-medium">{s.name}</td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground max-w-md truncate">{s.description}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground max-w-md truncate">{stripHtml(s.description)}</td>
                     <td className="px-4 py-3 text-sm text-muted-foreground">
                       {s.brochureName ? (
                         <span className="inline-flex items-center gap-1.5"><FileText className="w-4 h-4 text-primary" /> {s.brochureName}</span>
@@ -242,29 +228,25 @@ const ServicesManagement = () => {
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="block text-sm font-medium text-foreground">Description *</label>
-                <span className={`text-xs ${form.description.length > MAX_DESC ? "text-destructive" : "text-muted-foreground"}`}>
-                  {form.description.length}/{MAX_DESC}
-                </span>
-              </div>
-              <textarea required rows={5} maxLength={MAX_DESC} value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body resize-none" />
+              <label className="block text-sm font-medium text-foreground mb-1">Description *</label>
+              <RichTextEditor
+                value={form.description}
+                onChange={(html) => setForm({ ...form, description: html })}
+                placeholder="Describe the service, scope and benefits…"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Use bold, italic, headings, lists and alignment to keep your content clear and scannable.
+              </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Service Image *</label>
-                <input ref={imgRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden"
-                  onChange={(e) => handleImage(e.target.files?.[0])} />
-                <button type="button" onClick={() => imgRef.current?.click()}
-                  className="w-full h-11 px-4 rounded-lg border border-dashed border-border bg-background hover:bg-muted/50 flex items-center justify-center gap-2 text-sm">
-                  <Upload className="w-4 h-4" /> {form.image ? "Change image" : "Upload image"}
-                </button>
-                {form.image && <img src={form.image} alt="preview" className="mt-2 w-full h-32 object-cover rounded-lg border border-border" />}
-                <p className="text-xs text-muted-foreground mt-1">PNG / JPG / WEBP · max {MAX_IMAGE_MB} MB</p>
-              </div>
+              <ImageUploadField
+                label="Service Image"
+                required
+                presetKey="service"
+                value={form.image}
+                onChange={(file, dataUrl) => setForm((f) => ({ ...f, image: dataUrl, imageFile: file }))}
+              />
 
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">Brochure (PDF)</label>

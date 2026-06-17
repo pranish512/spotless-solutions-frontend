@@ -2,11 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import RichTextRenderer from "@/components/RichTextRenderer";
 import {
   Download, FileText, ShieldCheck, Users, BadgeCheck, Headphones,
   CheckCircle2, ArrowRight, Phone, Mail, MessageSquare, Building2, Factory, GraduationCap, Hospital,
 } from "lucide-react";
 import { getActiveServices, getServiceBySlug } from "@/lib/services";
+
+const stripHtml = (html) => (html || "").replace(/<[^>]*>/g, "").trim();
 
 const HERO_BG =
   "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=1920&q=80";
@@ -91,7 +94,7 @@ const ServiceDetail = () => {
                 <span className="text-white">{service.name}</span>
               </nav>
               <h1 className="font-display font-bold text-3xl sm:text-4xl lg:text-5xl tracking-tight">{service.name}</h1>
-              <p className="mt-5 text-white/85 text-base sm:text-lg leading-relaxed line-clamp-5">{service.description}</p>
+              <p className="mt-5 text-white/85 text-base sm:text-lg leading-relaxed line-clamp-5">{stripHtml(service.description)}</p>
 
               <ul className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-sm">
                 {["Trained & uniformed staff", "Modern equipment", "Hospital-grade chemicals", "Transparent SLAs"].map((b) => (
@@ -149,7 +152,7 @@ const ServiceDetail = () => {
             <div className="lg:col-span-2">
               <p className="text-xs font-semibold tracking-[0.18em] text-primary uppercase">About this service</p>
               <h2 className="font-display font-bold text-3xl text-foreground mt-2">Detailed Overview</h2>
-              <p className="mt-5 text-foreground/80 leading-relaxed">{service.description}</p>
+              <div className="mt-5"><RichTextRenderer html={service.description} /></div>
 
               <h3 className="font-display font-bold text-lg text-foreground mt-8 mb-3">Service Scope</h3>
               <ul className="space-y-2.5 text-sm text-foreground/85">
@@ -240,7 +243,7 @@ const ServiceDetail = () => {
                     </div>
                     <div className="p-5">
                       <h3 className="font-display font-bold text-base text-foreground group-hover:text-primary transition-colors">{s.name}</h3>
-                      <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2">{s.description}</p>
+                      <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2">{stripHtml(s.description)}</p>
                     </div>
                   </Link>
                 ))}

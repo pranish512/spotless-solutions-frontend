@@ -59,7 +59,7 @@ const Services = () => {
                   </div>
                   <div className="p-6">
                     <h3 className="font-display font-bold text-lg text-foreground group-hover:text-primary transition-colors">{s.name}</h3>
-                    <p className="mt-2 text-sm text-muted-foreground line-clamp-3">{s.description}</p>
+                    <p className="mt-2 text-sm text-muted-foreground line-clamp-3">{(s.description || "").replace(/<[^>]*>/g, "").trim()}</p>
                     <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-primary">
                       Learn more <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                     </span>
