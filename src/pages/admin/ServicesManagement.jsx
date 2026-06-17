@@ -47,6 +47,12 @@ const ServicesManagement = () => {
 
   useEffect(() => {
     const load = async () => {
+      // Feature flag: backend /api/admin/services endpoints are not built yet.
+      // Skip the network call in local dev to avoid noisy errors; fall back to
+      // the localStorage-cached items already loaded into state.
+      if (import.meta.env.VITE_FEATURE_ADMIN_SERVICES !== "true") {
+        return;
+      }
       setLoading(true);
       setError("");
       try {
