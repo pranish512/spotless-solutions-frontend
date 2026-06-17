@@ -23,6 +23,7 @@ export const buildEmptyUserForm = (defaultUserType = "Customer") => ({
   address: "",
   profilePhoto: "",
   userType: defaultUserType,
+  password: "",
   description: "",
   branch: BRANCH_OPTIONS[0],
   status: "Active",
@@ -70,6 +71,16 @@ const UserForm = ({ form, setForm, userTypeOptions, showStatus = true, onSubmit,
         </Field>
         <Field label="Email / Login ID *">
           <input required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={inputCls} />
+        </Field>
+        <Field label={isEditing ? "Password" : "Password *"}>
+          <input
+            required={!isEditing}
+            type="password"
+            minLength={8}
+            value={form.password || ""}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            className={inputCls}
+          />
         </Field>
         <Field label="Branch *">
           <select required value={form.branch} onChange={(e) => setForm({ ...form, branch: e.target.value })} className={inputCls}>

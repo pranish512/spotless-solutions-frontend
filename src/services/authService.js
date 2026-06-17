@@ -1,25 +1,37 @@
-// Auth service — UI calls these; swap implementation when backend is wired.
-// TODO: API INTEGRATION -> replace mock returns with apiRequest(...) calls.
+// Auth service - UI calls these; implementation is backed by FastAPI.
+// TODO: API INTEGRATION -> keep auth calls centralized here.
 import { apiRequest } from "./api";
+
+const normalizeAuth = (response) => {
+  const data = response?.data || response;
+  return {
+    user: data.user,
+    token: data.access_token,
+    refreshToken: data.refresh_token,
+    tokenType: data.token_type,
+    expiresIn: data.expires_in,
+  };
+};
 
 export const authService = {
   async login(email, password) {
-    // return apiRequest("/auth/login", { method: "POST", body: { email, password } });
-    return {
-      user: { id: "1", email, name: email.split("@")[0], role: email.includes("admin") ? "admin" : "customer" },
-      token: "mock_token",
-    };
+    const response = await apiRequest("/auth/login", { method: "POST", body: { email, password } });
+    return normalizeAuth(response);
   },
   async register(name, email, password) {
-    // return apiRequest("/auth/register", { method: "POST", body: { name, email, password } });
-    return { user: { id: "2", email, name, role: "customer" }, token: "mock_token" };
+    const response = await apiRequest("/auth/register", { method: "POST", body: { name, email, password } });
+    return normalizeAuth(response);
   },
-  async logout() {
-    // return apiRequest("/auth/logout", { method: "POST" });
-    return true;
+  async refresh(refreshToken) {
+    const response = await apiRequest("/auth/refresh", { method: "POST", body: { refresh_token: refreshToken }, skipAuthRefresh: true });
+    return normalizeAuth(response);
+  },
+  async logout(refreshToken) {
+    if (!refreshToken) return true;
+    return apiRequest("/auth/logout", { method: "POST", body: { refresh_token: refreshToken } });
   },
   async me() {
-    // return apiRequest("/auth/me");
-    return null;
+    const response = await apiRequest("/auth/me");
+    return response?.data || response;
   },
 };

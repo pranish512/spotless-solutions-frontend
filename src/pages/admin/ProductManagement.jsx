@@ -1,7 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AdminSidebar from "@/components/AdminSidebar";
 import ToggleSwitch from "@/components/ToggleSwitch";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { useAuth } from "@/contexts/AuthContext";
+import { adminMastersService } from "@/services/adminMastersService";
+import { adminProductsService } from "@/services/adminProductsService";
 import { Pencil, Trash2, Search, X, Upload, Eye, Star, Plus } from "lucide-react";
 
 // TODO: API INTEGRATION -> GET /api/admin/products?page=1&search= => { products[], totalPages }
@@ -22,9 +25,9 @@ const sampleReviews = [
 ];
 
 // TODO: API INTEGRATION -> GET /api/admin/categories
-const categoryOptions = ["Cleaning Liquids", "Gloves", "Masks & Safety", "Car Cleaning", "Cleaning Tools", "Kitchen Care"];
+const fallbackCategoryOptions = ["Cleaning Liquids", "Gloves", "Masks & Safety", "Car Cleaning", "Cleaning Tools", "Kitchen Care"];
 // TODO: API INTEGRATION -> GET /api/admin/tags
-const tagOptions = ["Eco-Friendly", "Best Seller", "New Arrival", "On Sale"];
+const fallbackTagOptions = ["Eco-Friendly", "Best Seller", "New Arrival", "On Sale"];
 const productTypes = ["Simple", "Variable size", "Bundle"];
 
 const emptyForm = {
@@ -38,7 +41,7 @@ const emptyForm = {
   image: "",
   videoDemo: "",
   quantity: 0,
-  category: categoryOptions[0],
+  category: fallbackCategoryOptions[0],
   actualPrice: 0,
   sellingPrice: 0,
   discount: 0,
@@ -53,45 +56,100 @@ const emptyForm = {
 };
 
 const ProductManagement = () => {
+  const { can } = useAuth();
+  const canWrite = can("products", "write");
+  const canDelete = can("products", "delete");
   const [products, setProducts] = useState(initialProducts);
+  const [categories, setCategories] = useState([]);
+  const [tags, setTags] = useState([]);
+  const [categoryOptions, setCategoryOptions] = useState(fallbackCategoryOptions);
+  const [tagOptions, setTagOptions] = useState(fallbackTagOptions);
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
   const [previewProduct, setPreviewProduct] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const isEditing = !!editingId;
+  const refs = { categories, tags };
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const [categoryData, tagData] = await Promise.all([
+          adminMastersService.listCategories({ limit: 100 }),
+          adminMastersService.listTags({ limit: 100 }),
+        ]);
+        const activeCategories = categoryData.items.filter((category) => category.status === "Active");
+        const activeTags = tagData.items.filter((tag) => tag.status === "Active");
+        const nextRefs = { categories: categoryData.items, tags: tagData.items };
+
+        setCategories(categoryData.items);
+        setTags(tagData.items);
+        setCategoryOptions(activeCategories.length ? activeCategories.map((category) => category.name) : fallbackCategoryOptions);
+        setTagOptions(activeTags.length ? activeTags.map((tag) => tag.name) : fallbackTagOptions);
+
+        // TODO: API INTEGRATION -> GET /api/admin/products?page=1&search=
+        const data = await adminProductsService.listProducts({ limit: 100 }, nextRefs);
+        setProducts(data.items);
+      } catch (err) {
+        setError(err.message || "Unable to load products.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
 
   const openCreate = () => {
     setEditingId(null);
-    setForm(emptyForm);
+    setForm({ ...emptyForm, category: categoryOptions[0] || fallbackCategoryOptions[0] });
     setShowModal(true);
   };
 
-  const openEdit = (product) => {
-    setEditingId(product.id);
-    setForm({
-      ...emptyForm,
-      name: product.name,
-      category: product.category,
-      sellingPrice: product.sellingPrice,
-      quantity: product.quantity,
-    });
-    setShowModal(true);
+  const openEdit = async (product) => {
+    setError("");
+    try {
+      // TODO: API INTEGRATION -> GET /api/admin/products/{id}
+      const detail = await adminProductsService.getProduct(product.id, refs);
+      setEditingId(product.id);
+      setForm({ ...emptyForm, ...detail });
+      setShowModal(true);
+    } catch (err) {
+      setError(err.message || "Unable to load product.");
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     // TODO: API INTEGRATION -> DELETE /api/admin/products/{id} => { success }
-    setProducts((prev) => prev.filter((p) => p.id !== confirmDeleteId));
-    setConfirmDeleteId(null);
+    if (!canDelete) return;
+    try {
+      await adminProductsService.deleteProduct(confirmDeleteId);
+      setProducts((prev) => prev.filter((p) => p.id !== confirmDeleteId));
+      setConfirmDeleteId(null);
+    } catch (err) {
+      setError(err.message || "Unable to delete product.");
+    }
   };
 
   const filtered = products.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
 
-  const toggleActive = (id) => {
+  const toggleActive = async (id) => {
     // TODO: API INTEGRATION -> PATCH /api/admin/products/{id}/status { active } => { product }
-    setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, active: !p.active } : p)));
+    if (!canWrite) return;
+    const current = products.find((p) => p.id === id);
+    if (!current) return;
+    try {
+      const updated = await adminProductsService.toggleProduct(id, !current.active, refs);
+      setProducts((prev) => prev.map((p) => (p.id === id ? updated : p)));
+    } catch (err) {
+      setError(err.message || "Unable to update product status.");
+    }
   };
 
   const toggleTag = (tag) => {
@@ -140,40 +198,25 @@ const ProductManagement = () => {
     setForm((f) => ({ ...f, videoDemo: URL.createObjectURL(file) }));
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    if (isEditing) {
-      // TODO: API INTEGRATION -> PUT /api/admin/products/{id} { ...form } => { updatedProduct }
-      setProducts((prev) =>
-        prev.map((p) =>
-          p.id === editingId
-            ? {
-                ...p,
-                name: form.name,
-                category: form.category,
-                sellingPrice: Number(form.sellingPrice),
-                quantity: Number(form.quantity),
-              }
-            : p
-        )
-      );
-    } else {
-      // TODO: API INTEGRATION -> POST /api/admin/products { ...form } => { product }
-      setProducts((prev) => [
-        ...prev,
-        {
-          id: String(Date.now()),
-          name: form.name,
-          category: form.category,
-          sellingPrice: Number(form.sellingPrice),
-          quantity: Number(form.quantity),
-          active: true,
-        },
-      ]);
+    setError("");
+    try {
+      if (isEditing) {
+        // TODO: API INTEGRATION -> PUT /api/admin/products/{id} { ...form } => { updatedProduct }
+        const updated = await adminProductsService.updateProduct(editingId, form, refs);
+        setProducts((prev) => prev.map((p) => (p.id === editingId ? updated : p)));
+      } else {
+        // TODO: API INTEGRATION -> POST /api/admin/products { ...form } => { product }
+        const created = await adminProductsService.createProduct(form, refs);
+        setProducts((prev) => [created, ...prev]);
+      }
+      setForm(emptyForm);
+      setEditingId(null);
+      setShowModal(false);
+    } catch (err) {
+      setError(err.message || "Unable to save product.");
     }
-    setForm(emptyForm);
-    setEditingId(null);
-    setShowModal(false);
   };
 
   return (
@@ -182,12 +225,14 @@ const ProductManagement = () => {
       <main className="flex-1 min-w-0 p-4 md:p-6 lg:p-8 bg-muted/30">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 md:mb-8">
           <h2 className="font-display font-bold text-2xl text-foreground">Product Management</h2>
-          <button
-            onClick={openCreate}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm hover:opacity-90 transition-opacity self-start sm:self-auto"
-          >
-            <Plus className="w-4 h-4" /> Add Product
-          </button>
+          {canWrite && (
+            <button
+              onClick={openCreate}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm hover:opacity-90 transition-opacity self-start sm:self-auto"
+            >
+              <Plus className="w-4 h-4" /> Add Product
+            </button>
+          )}
         </div>
 
         <div className="relative max-w-sm mb-6">
@@ -200,6 +245,7 @@ const ProductManagement = () => {
             className="w-full h-11 pl-10 pr-4 rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring font-body"
           />
         </div>
+        {error && <div className="mb-4 p-3 rounded-md bg-destructive/10 text-destructive text-sm">{error}</div>}
 
         <div className="bg-card rounded-lg shadow-card overflow-hidden">
           <div className="overflow-x-auto">
@@ -216,7 +262,9 @@ const ProductManagement = () => {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((product) => (
+                {loading ? (
+                  <tr><td colSpan={7} className="px-4 py-8 text-center text-sm text-muted-foreground">Loading products...</td></tr>
+                ) : filtered.map((product) => (
                   <tr key={product.id} className="border-t border-border hover:bg-muted/50 transition-colors">
                     <td className="px-4 py-3 text-sm font-medium text-foreground">{product.name}</td>
                     <td className="px-4 py-3 text-sm text-muted-foreground">{product.category}</td>
@@ -231,7 +279,7 @@ const ProductManagement = () => {
                     <td className="px-4 py-3">
                       <ToggleSwitch
                         checked={product.active}
-                        onChange={() => toggleActive(product.id)}
+                        onChange={() => canWrite && toggleActive(product.id)}
                         labelOn="Active"
                         labelOff="Deactive"
                       />
@@ -247,24 +295,31 @@ const ProductManagement = () => {
                           <Eye className="w-4 h-4" />
                         </button>
                         {/* TODO: API INTEGRATION -> PUT /api/admin/products/{id} { ...productData } => { updatedProduct } */}
-                        <button
-                          onClick={() => openEdit(product)}
-                          className="p-2 rounded-md hover:bg-muted text-primary transition-colors"
-                          aria-label="Edit"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => setConfirmDeleteId(product.id)}
-                          className="p-2 rounded-md hover:bg-destructive/10 text-destructive transition-colors"
-                          aria-label="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {canWrite && (
+                          <button
+                            onClick={() => openEdit(product)}
+                            className="p-2 rounded-md hover:bg-muted text-primary transition-colors"
+                            aria-label="Edit"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                        )}
+                        {canDelete && (
+                          <button
+                            onClick={() => setConfirmDeleteId(product.id)}
+                            className="p-2 rounded-md hover:bg-destructive/10 text-destructive transition-colors"
+                            aria-label="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
                 ))}
+                {!loading && filtered.length === 0 && (
+                  <tr><td colSpan={7} className="px-4 py-8 text-center text-sm text-muted-foreground">No products found.</td></tr>
+                )}
               </tbody>
             </table>
           </div>

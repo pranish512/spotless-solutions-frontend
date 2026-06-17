@@ -7,6 +7,7 @@ export const APP_SCREENS = [
   { key: "tags", label: "Tags" },
   { key: "users", label: "Users" },
   { key: "user_types", label: "User Types" },
+  { key: "branches", label: "Branches" },
   { key: "staff", label: "Staff" },
   { key: "orders", label: "Orders" },
   { key: "reports", label: "Reports" },
