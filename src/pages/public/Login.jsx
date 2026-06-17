@@ -22,7 +22,12 @@ const Login = () => {
         navigate("/", { replace: true });
       }
     } catch (err) {
-      setError("Invalid email or password. Please try again.");
+      const msg = err?.message || "Login failed. Please try again.";
+      if (msg.toLowerCase().includes("failed to fetch") || msg.toLowerCase().includes("network")) {
+        setError("Cannot reach backend. Check that the API is running and CORS allows http://localhost:8080.");
+      } else {
+        setError(msg);
+      }
     }
   };
 
