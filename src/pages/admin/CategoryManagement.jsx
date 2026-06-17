@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AdminSidebar from "@/components/AdminSidebar";
 import ResponsiveModal from "@/components/ResponsiveModal";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import ToggleSwitch from "@/components/ToggleSwitch";
 import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { adminMastersService } from "@/services/adminMastersService";
 
 // TODO: API INTEGRATION -> GET /api/admin/categories
 const initialCategories = [
@@ -18,12 +20,34 @@ const initialCategories = [
 const emptyForm = { name: "", slug: "", status: "Active" };
 
 const CategoryManagement = () => {
+  const { can } = useAuth();
+  const canWrite = can("categories", "write");
+  const canDelete = can("categories", "delete");
   const [categories, setCategories] = useState(initialCategories);
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        // TODO: API INTEGRATION -> GET /api/admin/categories
+        const data = await adminMastersService.listCategories({ limit: 100 });
+        setCategories(data.items);
+      } catch (err) {
+        setError(err.message || "Unable to load categories.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
 
   const filtered = categories.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase()) || c.slug.toLowerCase().includes(search.toLowerCase())
@@ -32,27 +56,49 @@ const CategoryManagement = () => {
   const openCreate = () => { setEditingId(null); setForm(emptyForm); setShowModal(true); };
   const openEdit = (cat) => { setEditingId(cat.id); setForm({ name: cat.name, slug: cat.slug, status: cat.status || "Active" }); setShowModal(true); };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    if (editingId) {
-      // TODO: API INTEGRATION -> PUT /api/admin/categories/{id}
-      setCategories((prev) => prev.map((c) => (c.id === editingId ? { ...c, ...form } : c)));
-    } else {
-      // TODO: API INTEGRATION -> POST /api/admin/categories
-      setCategories((prev) => [...prev, { id: String(Date.now()), ...form, productCount: 0 }]);
+    setError("");
+    try {
+      if (editingId) {
+        // TODO: API INTEGRATION -> PUT /api/admin/categories/{id}
+        const updated = await adminMastersService.updateCategory(editingId, form);
+        setCategories((prev) => prev.map((c) => (c.id === editingId ? updated : c)));
+      } else {
+        // TODO: API INTEGRATION -> POST /api/admin/categories
+        const created = await adminMastersService.createCategory(form);
+        setCategories((prev) => [created, ...prev]);
+      }
+      setShowModal(false); setEditingId(null);
+    } catch (err) {
+      setError(err.message || "Unable to save category.");
     }
-    setShowModal(false); setEditingId(null);
   };
 
-  const toggleStatus = (id) => {
+  const toggleStatus = async (id) => {
     // TODO: API INTEGRATION -> PATCH /api/admin/categories/{id}/status
-    setCategories((prev) => prev.map((c) => (c.id === id ? { ...c, status: c.status === "Active" ? "Inactive" : "Active" } : c)));
+    if (!canWrite) return;
+    const current = categories.find((c) => c.id === id);
+    if (!current) return;
+    const nextStatus = current.status === "Active" ? "Inactive" : "Active";
+    try {
+      const updated = await adminMastersService.toggleCategory(id, nextStatus);
+      setCategories((prev) => prev.map((c) => (c.id === id ? updated : c)));
+    } catch (err) {
+      setError(err.message || "Unable to update category status.");
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     // TODO: API INTEGRATION -> DELETE /api/admin/categories/{id}
-    setCategories((prev) => prev.filter((c) => c.id !== confirmDeleteId));
-    setConfirmDeleteId(null);
+    if (!canDelete) return;
+    try {
+      await adminMastersService.deleteCategory(confirmDeleteId);
+      setCategories((prev) => prev.filter((c) => c.id !== confirmDeleteId));
+      setConfirmDeleteId(null);
+    } catch (err) {
+      setError(err.message || "Unable to delete category.");
+    }
   };
 
   return (
@@ -61,10 +107,12 @@ const CategoryManagement = () => {
       <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-muted/30 min-w-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 sm:mb-8">
           <h2 className="font-display font-bold text-2xl text-foreground">Category Management</h2>
-          <button onClick={openCreate}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm hover:opacity-90 transition-opacity self-start sm:self-auto">
-            <Plus className="w-4 h-4" /> Add Category
-          </button>
+          {canWrite && (
+            <button onClick={openCreate}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm hover:opacity-90 transition-opacity self-start sm:self-auto">
+              <Plus className="w-4 h-4" /> Add Category
+            </button>
+          )}
         </div>
 
         <div className="relative max-w-sm mb-6">
@@ -72,6 +120,7 @@ const CategoryManagement = () => {
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search categories..."
             className="w-full h-11 pl-10 pr-4 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-ring font-body" />
         </div>
+        {error && <div className="mb-4 p-3 rounded-md bg-destructive/10 text-destructive text-sm">{error}</div>}
 
         <div className="bg-card rounded-lg shadow-card overflow-hidden">
           <div className="overflow-x-auto">
@@ -86,23 +135,25 @@ const CategoryManagement = () => {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((cat) => (
+                {loading ? (
+                  <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-muted-foreground">Loading categories...</td></tr>
+                ) : filtered.map((cat) => (
                   <tr key={cat.id} className="border-t border-border hover:bg-muted/50">
                     <td className="px-4 py-3 text-sm font-medium">{cat.name}</td>
                     <td className="px-4 py-3 text-sm text-muted-foreground">{cat.slug}</td>
                     <td className="px-4 py-3 text-sm">{cat.productCount}</td>
                     <td className="px-4 py-3">
-                      <ToggleSwitch checked={cat.status === "Active"} onChange={() => toggleStatus(cat.id)} labelOn="Active" labelOff="Inactive" />
+                      <ToggleSwitch checked={cat.status === "Active"} onChange={() => canWrite && toggleStatus(cat.id)} labelOn="Active" labelOff="Inactive" />
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => openEdit(cat)} className="p-2 rounded-md hover:bg-muted text-primary"><Pencil className="w-4 h-4" /></button>
-                        <button onClick={() => setConfirmDeleteId(cat.id)} className="p-2 rounded-md hover:bg-destructive/10 text-destructive"><Trash2 className="w-4 h-4" /></button>
+                        {canWrite && <button onClick={() => openEdit(cat)} className="p-2 rounded-md hover:bg-muted text-primary"><Pencil className="w-4 h-4" /></button>}
+                        {canDelete && <button onClick={() => setConfirmDeleteId(cat.id)} className="p-2 rounded-md hover:bg-destructive/10 text-destructive"><Trash2 className="w-4 h-4" /></button>}
                       </div>
                     </td>
                   </tr>
                 ))}
-                {filtered.length === 0 && (
+                {!loading && filtered.length === 0 && (
                   <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-muted-foreground">No categories found.</td></tr>
                 )}
               </tbody>

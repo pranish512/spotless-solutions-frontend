@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AdminSidebar from "@/components/AdminSidebar";
 import ResponsiveModal from "@/components/ResponsiveModal";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import ToggleSwitch from "@/components/ToggleSwitch";
 import UserForm, { buildEmptyUserForm } from "@/components/UserForm";
 import { STAFF_USER_TYPE_NAMES, isCustomerType } from "@/lib/userTypes";
+import { saveBranches } from "@/lib/branches";
+import { useAuth } from "@/contexts/AuthContext";
+import { adminMastersService } from "@/services/adminMastersService";
+import { adminUsersService } from "@/services/adminUsersService";
 import { Plus, Pencil, Trash2, Search } from "lucide-react";
 
 // TODO: API INTEGRATION -> GET /api/admin/users?kind=staff => only non-customer users
@@ -15,12 +19,52 @@ const initialStaff = [
 ];
 
 const StaffManagement = () => {
+  const { can } = useAuth();
+  const canWrite = can("staff", "write");
+  const canDelete = can("staff", "delete");
   const [staff, setStaff] = useState(initialStaff);
+  const [userTypes, setUserTypes] = useState([]);
+  const [branches, setBranches] = useState([]);
+  const [userTypeOptions, setUserTypeOptions] = useState(STAFF_USER_TYPE_NAMES);
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(buildEmptyUserForm(STAFF_USER_TYPE_NAMES[0]));
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const refs = { userTypes, branches };
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const [typeData, branchData] = await Promise.all([
+          adminMastersService.listUserTypes({ limit: 100 }),
+          adminMastersService.listBranches({ limit: 100 }),
+        ]);
+        const activeBranches = branchData.items.filter((branch) => branch.status === "Active");
+        const staffTypes = typeData.items.filter((type) => type.kind !== "customer" && type.status === "Active");
+        const nextRefs = { userTypes: typeData.items, branches: branchData.items };
+
+        setUserTypes(typeData.items);
+        setBranches(branchData.items);
+        setUserTypeOptions(staffTypes.length ? staffTypes.map((type) => type.name) : STAFF_USER_TYPE_NAMES);
+        saveBranches(activeBranches.length ? activeBranches : branchData.items);
+
+        // TODO: API INTEGRATION -> GET /api/admin/staff
+        const data = await adminUsersService.listStaff({ limit: 100 }, nextRefs);
+        setStaff(data.items);
+      } catch (err) {
+        setError(err.message || "Unable to load staff.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
 
   // Staff screen excludes customers — backend users only
   const visible = staff.filter((s) => !isCustomerType(s.userType));
@@ -28,30 +72,52 @@ const StaffManagement = () => {
     (s) => s.name.toLowerCase().includes(search.toLowerCase()) || s.email.toLowerCase().includes(search.toLowerCase())
   );
 
-  const openCreate = () => { setEditingId(null); setForm(buildEmptyUserForm(STAFF_USER_TYPE_NAMES[0])); setShowModal(true); };
-  const openEdit = (s) => { setEditingId(s.id); setForm({ ...buildEmptyUserForm(s.userType), ...s }); setShowModal(true); };
+  const openCreate = () => { setEditingId(null); setForm(buildEmptyUserForm(userTypeOptions[0] || STAFF_USER_TYPE_NAMES[0])); setShowModal(true); };
+  const openEdit = (s) => { setEditingId(s.id); setForm({ ...buildEmptyUserForm(s.userType), ...s, password: "" }); setShowModal(true); };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    if (editingId) {
-      // TODO: API INTEGRATION -> PUT /api/admin/users/{id}
-      setStaff((prev) => prev.map((s) => (s.id === editingId ? { ...s, ...form } : s)));
-    } else {
-      // TODO: API INTEGRATION -> POST /api/admin/users (kind=staff)
-      setStaff((prev) => [...prev, { id: String(Date.now()), ...form }]);
+    setError("");
+    try {
+      if (editingId) {
+        // TODO: API INTEGRATION -> PUT /api/admin/staff/{id}
+        const updated = await adminUsersService.updateStaff(editingId, form, refs);
+        setStaff((prev) => prev.map((s) => (s.id === editingId ? updated : s)));
+      } else {
+        // TODO: API INTEGRATION -> POST /api/admin/staff
+        const created = await adminUsersService.createStaff(form, refs);
+        setStaff((prev) => [created, ...prev]);
+      }
+      setShowModal(false); setEditingId(null);
+    } catch (err) {
+      setError(err.message || "Unable to save staff.");
     }
-    setShowModal(false); setEditingId(null);
   };
 
-  const toggleStatus = (id) => {
-    // TODO: API INTEGRATION -> PATCH /api/admin/users/{id}/status
-    setStaff((prev) => prev.map((s) => (s.id === id ? { ...s, status: s.status === "Active" ? "Inactive" : "Active" } : s)));
+  const toggleStatus = async (id) => {
+    // TODO: API INTEGRATION -> PATCH /api/admin/staff/{id}/status
+    if (!canWrite) return;
+    const current = staff.find((s) => s.id === id);
+    if (!current) return;
+    const nextStatus = current.status === "Active" ? "Inactive" : "Active";
+    try {
+      const updated = await adminUsersService.toggleStaff(id, nextStatus, refs);
+      setStaff((prev) => prev.map((s) => (s.id === id ? updated : s)));
+    } catch (err) {
+      setError(err.message || "Unable to update staff status.");
+    }
   };
 
-  const handleDelete = () => {
-    // TODO: API INTEGRATION -> DELETE /api/admin/users/{id}
-    setStaff((prev) => prev.filter((s) => s.id !== confirmDeleteId));
-    setConfirmDeleteId(null);
+  const handleDelete = async () => {
+    // TODO: API INTEGRATION -> DELETE /api/admin/staff/{id}
+    if (!canDelete) return;
+    try {
+      await adminUsersService.deleteStaff(confirmDeleteId);
+      setStaff((prev) => prev.filter((s) => s.id !== confirmDeleteId));
+      setConfirmDeleteId(null);
+    } catch (err) {
+      setError(err.message || "Unable to delete staff.");
+    }
   };
 
   return (
@@ -60,11 +126,14 @@ const StaffManagement = () => {
       <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-muted/30 min-w-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 sm:mb-8">
           <h2 className="font-display font-bold text-2xl text-foreground">Staff Management</h2>
-          <button onClick={openCreate}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm hover:opacity-90 transition-opacity self-start sm:self-auto">
-            <Plus className="w-4 h-4" /> Add Staff
-          </button>
+          {canWrite && (
+            <button onClick={openCreate}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm hover:opacity-90 transition-opacity self-start sm:self-auto">
+              <Plus className="w-4 h-4" /> Add Staff
+            </button>
+          )}
         </div>
+        {error && <div className="mb-4 p-3 rounded-md bg-destructive/10 text-destructive text-sm">{error}</div>}
 
         <div className="relative max-w-sm mb-6">
           <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
@@ -85,22 +154,27 @@ const StaffManagement = () => {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((s) => (
+                {loading ? (
+                  <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-muted-foreground">Loading staff...</td></tr>
+                ) : filtered.map((s) => (
                   <tr key={s.id} className="border-t border-border hover:bg-muted/50">
                     <td className="px-4 py-3 text-sm font-medium">{s.name}</td>
                     <td className="px-4 py-3 text-sm text-muted-foreground">{s.email}</td>
                     <td className="px-4 py-3 text-sm">{s.userType}</td>
                     <td className="px-4 py-3">
-                      <ToggleSwitch checked={s.status === "Active"} onChange={() => toggleStatus(s.id)} labelOn="Active" labelOff="Inactive" />
+                      <ToggleSwitch checked={s.status === "Active"} onChange={() => canWrite && toggleStatus(s.id)} labelOn="Active" labelOff="Inactive" />
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => openEdit(s)} className="p-2 rounded-md hover:bg-muted text-primary"><Pencil className="w-4 h-4" /></button>
-                        <button onClick={() => setConfirmDeleteId(s.id)} className="p-2 rounded-md hover:bg-destructive/10 text-destructive"><Trash2 className="w-4 h-4" /></button>
+                        {canWrite && <button onClick={() => openEdit(s)} className="p-2 rounded-md hover:bg-muted text-primary"><Pencil className="w-4 h-4" /></button>}
+                        {canDelete && <button onClick={() => setConfirmDeleteId(s.id)} className="p-2 rounded-md hover:bg-destructive/10 text-destructive"><Trash2 className="w-4 h-4" /></button>}
                       </div>
                     </td>
                   </tr>
                 ))}
+                {!loading && filtered.length === 0 && (
+                  <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-muted-foreground">No staff found.</td></tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -115,7 +189,7 @@ const StaffManagement = () => {
           <UserForm
             form={form}
             setForm={setForm}
-            userTypeOptions={STAFF_USER_TYPE_NAMES}
+            userTypeOptions={userTypeOptions}
             showStatus
             isEditing={!!editingId}
             onSubmit={handleSave}

@@ -30,5 +30,6 @@ export const session = {
 export const STORAGE_KEYS = {
   AUTH_USER: "ss_auth_user",
   AUTH_TOKEN: "auth_token",
+  REFRESH_TOKEN: "refresh_token",
   CART: "ss_cart",
 };
