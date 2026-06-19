@@ -1,5 +1,5 @@
-import { Upload } from "lucide-react";
 import AccessControlMatrix from "@/components/AccessControlMatrix";
+import ImageUploadField from "@/components/ImageUploadField";
 import { BRANCH_OPTIONS } from "@/lib/userTypes";
 import { getActiveBranchNames } from "@/lib/branches";
 import { buildDefaultPermissions } from "@/lib/screens";
@@ -22,6 +22,7 @@ export const buildEmptyUserForm = (defaultUserType = "Customer") => ({
   email: "",
   address: "",
   profilePhoto: "",
+  profilePhotoFile: null,
   userType: defaultUserType,
   password: "",
   description: "",
@@ -31,30 +32,24 @@ export const buildEmptyUserForm = (defaultUserType = "Customer") => ({
 });
 
 const UserForm = ({ form, setForm, userTypeOptions, showStatus = true, onSubmit, onCancel, isEditing }) => {
-  const handlePhoto = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handlePhoto = (file, dataUrl) => {
     // TODO: API INTEGRATION -> POST /api/admin/users/upload-photo (multipart) => { url }
-    setForm((f) => ({ ...f, profilePhoto: URL.createObjectURL(file) }));
+    setForm((f) => ({ ...f, profilePhoto: dataUrl || "", profilePhotoFile: file || null }));
   };
 
   return (
     <form id="user-form" className="space-y-5" onSubmit={onSubmit}>
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-        <div className="w-20 h-20 rounded-full bg-muted overflow-hidden flex items-center justify-center shrink-0">
-          {form.profilePhoto ? (
-            <img src={form.profilePhoto} alt="Profile" className="w-full h-full object-cover" />
-          ) : (
-            <Upload className="w-6 h-6 text-muted-foreground" />
-          )}
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-1">Profile Photo</label>
-          <input type="file" accept="image/*" onChange={handlePhoto} className="text-sm max-w-full" />
-        </div>
+      <div className="max-w-xs">
+        <ImageUploadField
+          label="Profile Photo"
+          presetKey="profile"
+          value={form.profilePhoto}
+          onChange={handlePhoto}
+          aspectClass="aspect-square"
+        />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Field label="Name *">
           <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={inputCls} />
         </Field>
@@ -67,7 +62,16 @@ const UserForm = ({ form, setForm, userTypeOptions, showStatus = true, onSubmit,
           </select>
         </Field>
         <Field label="Phone Number *">
-          <input required value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className={inputCls} />
+          <input
+            required
+            type="tel"
+            pattern="[0-9+\-\s()]{7,20}"
+            inputMode="tel"
+            title="Use digits, spaces, +, -, ( or ) only (7–20 chars)"
+            value={form.phone}
+            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            className={inputCls}
+          />
         </Field>
         <Field label="Email / Login ID *">
           <input required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={inputCls} />

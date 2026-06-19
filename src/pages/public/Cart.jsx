@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Trash2, Plus, Minus } from "lucide-react";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
@@ -6,7 +7,26 @@ import EmptyState from "@/components/EmptyState";
 import { useCart } from "@/store/CartContext";
 
 const Cart = () => {
-  const { items, total, updateQuantity, removeItem } = useCart();
+  const { items, total, updateQuantity, removeItem, loading } = useCart();
+  const [actionError, setActionError] = useState("");
+
+  const handleQty = async (id, qty) => {
+    setActionError("");
+    try {
+      await updateQuantity(id, qty);
+    } catch (err) {
+      setActionError(err?.message || "Could not update quantity");
+    }
+  };
+
+  const handleRemove = async (id) => {
+    setActionError("");
+    try {
+      await removeItem(id);
+    } catch (err) {
+      setActionError(err?.message || "Could not remove item");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -14,7 +34,15 @@ const Cart = () => {
       <div className="container mx-auto px-4 py-8 max-w-3xl flex-1 w-full">
         <h2 className="font-display font-bold text-2xl text-foreground mb-6">Shopping Cart</h2>
 
-        {items.length === 0 ? (
+        {actionError && (
+          <div className="mb-4 p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+            {actionError}
+          </div>
+        )}
+
+        {loading && items.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Loading cart…</p>
+        ) : items.length === 0 ? (
           <EmptyState
             title="Your cart is empty"
             message="Browse products and add them to your cart."
@@ -36,18 +64,39 @@ const Cart = () => {
                   </div>
                   <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
                     <div className="flex items-center gap-2">
-                      <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="w-8 h-8 rounded border border-border flex items-center justify-center hover:bg-muted"><Minus className="w-3 h-3" /></button>
+                      <button
+                        onClick={() => handleQty(item.id, item.quantity - 1)}
+                        disabled={loading}
+                        className="w-8 h-8 rounded border border-border flex items-center justify-center hover:bg-muted disabled:opacity-50"
+                        aria-label="Decrease quantity"
+                      >
+                        <Minus className="w-3 h-3" />
+                      </button>
                       <span className="text-sm font-medium w-6 text-center">{item.quantity}</span>
-                      <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="w-8 h-8 rounded border border-border flex items-center justify-center hover:bg-muted"><Plus className="w-3 h-3" /></button>
+                      <button
+                        onClick={() => handleQty(item.id, item.quantity + 1)}
+                        disabled={loading}
+                        className="w-8 h-8 rounded border border-border flex items-center justify-center hover:bg-muted disabled:opacity-50"
+                        aria-label="Increase quantity"
+                      >
+                        <Plus className="w-3 h-3" />
+                      </button>
                     </div>
-                    <button onClick={() => removeItem(item.id)} className="p-2 text-destructive hover:bg-destructive/10 rounded-md"><Trash2 className="w-4 h-4" /></button>
+                    <button
+                      onClick={() => handleRemove(item.id)}
+                      disabled={loading}
+                      className="p-2 text-destructive hover:bg-destructive/10 rounded-md disabled:opacity-50"
+                      aria-label="Remove item"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
 
             <div className="border-t border-border pt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-              <span className="font-display font-bold text-lg text-foreground">Total: ₹{total}</span>
+              <span className="font-display font-bold text-lg text-foreground">Total: ₹{total.toLocaleString("en-IN")}</span>
               <Link to="/checkout" className="px-6 py-3 rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm hover:opacity-90 transition-opacity text-center">
                 Proceed to Checkout
               </Link>

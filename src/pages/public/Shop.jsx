@@ -65,7 +65,7 @@ const Shop = () => {
               className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted">
               <SlidersHorizontal className="w-4 h-4" /> Filter
             </button>
-            <div className="relative flex-1 min-w-[180px] max-w-sm">
+            <div className="relative flex-1 min-w-[120px] sm:min-w-[180px] max-w-sm">
               <SearchIcon className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
               <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search products..."
                 className="w-full h-10 pl-9 pr-3 rounded-lg border border-border bg-background text-sm font-body focus:outline-none focus:ring-2 focus:ring-ring" />

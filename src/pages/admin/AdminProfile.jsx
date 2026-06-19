@@ -1,6 +1,7 @@
 import { useState } from "react";
 import AdminSidebar from "@/components/AdminSidebar";
-import { Upload, Save } from "lucide-react";
+import ImageUploadField from "@/components/ImageUploadField";
+import { Save } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 // TODO: API INTEGRATION -> GET /api/admin/profile => { name, email, profilePhoto }
@@ -10,14 +11,13 @@ const AdminProfile = () => {
     name: user?.name || "Admin",
     email: user?.email || "admin@spotless.com",
     profilePhoto: "",
+    profilePhotoFile: null,
   });
   const [savedAt, setSavedAt] = useState(null);
 
-  const handlePhoto = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handlePhoto = (file, dataUrl) => {
     // TODO: API INTEGRATION -> POST /api/admin/profile/upload-photo (multipart) => { url }
-    setForm((f) => ({ ...f, profilePhoto: URL.createObjectURL(file) }));
+    setForm((f) => ({ ...f, profilePhoto: dataUrl || "", profilePhotoFile: file || null }));
   };
 
   const handleSubmit = (e) => {
@@ -36,20 +36,14 @@ const AdminProfile = () => {
           onSubmit={handleSubmit}
           className="bg-card rounded-xl shadow-card p-8 max-w-2xl space-y-6"
         >
-          <div className="flex items-center gap-5">
-            <div className="w-24 h-24 rounded-full bg-muted overflow-hidden flex items-center justify-center">
-              {form.profilePhoto ? (
-                <img src={form.profilePhoto} alt="Admin" className="w-full h-full object-cover" />
-              ) : (
-                <Upload className="w-7 h-7 text-muted-foreground" />
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
-                Profile Picture
-              </label>
-              <input type="file" accept="image/*" onChange={handlePhoto} className="text-sm" />
-            </div>
+          <div className="max-w-xs">
+            <ImageUploadField
+              label="Profile Picture"
+              presetKey="profile"
+              value={form.profilePhoto}
+              onChange={handlePhoto}
+              aspectClass="aspect-square"
+            />
           </div>
 
           <div>

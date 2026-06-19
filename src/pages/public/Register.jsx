@@ -19,7 +19,12 @@ const Register = () => {
       await register(name, email, password);
       navigate("/", { replace: true });
     } catch (err) {
-      setError("Registration failed. Please try again.");
+      const msg = err?.message || "Registration failed. Please try again.";
+      if (msg.toLowerCase().includes("failed to fetch") || msg.toLowerCase().includes("network")) {
+        setError("Cannot reach backend. Check that the API is running.");
+      } else {
+        setError(msg);
+      }
     }
   };
 
@@ -59,14 +64,15 @@ const Register = () => {
             <label className="block text-sm font-medium text-foreground mb-1">Password *</label>
             <div className="relative">
               <Lock className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-              <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
+              <input type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)}
                 className="w-full h-11 pl-10 pr-4 rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring font-body"
-                placeholder="••••••••" />
+                placeholder="At least 8 characters" />
             </div>
+            <p className="mt-1 text-xs text-muted-foreground">Use at least 8 characters with a mix of letters and numbers.</p>
           </div>
 
           <button type="submit" disabled={loading}
-            className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50">
+            className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">
             {loading ? "Creating account..." : "Create Account"}
           </button>
         </form>

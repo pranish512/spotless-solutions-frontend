@@ -3,17 +3,11 @@ import AdminSidebar from "@/components/AdminSidebar";
 import RichTextEditor from "@/components/RichTextEditor";
 import RichTextRenderer from "@/components/RichTextRenderer";
 import { policiesService, MAX_ABOUT_IMAGES } from "@/lib/policies";
+import { validateImage, fileToDataUrl, formatGuideline, IMAGE_PRESETS } from "@/lib/imageValidation";
 import { Save, CheckCircle2, Upload, X, Eye, Image as ImageIcon } from "lucide-react";
 
 const SLUG = "about-us";
-
-const readAsDataUrl = (file) =>
-  new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(r.result);
-    r.onerror = reject;
-    r.readAsDataURL(file);
-  });
+const SLIDESHOW_PRESET = IMAGE_PRESETS.slideshow;
 
 const AboutUsEditor = () => {
   const [content, setContent] = useState("");
@@ -38,8 +32,23 @@ const AboutUsEditor = () => {
       return;
     }
     const list = Array.from(files).slice(0, remaining);
-    const dataUrls = await Promise.all(list.map(readAsDataUrl));
-    setImages((prev) => [...prev, ...dataUrls].slice(0, MAX_ABOUT_IMAGES));
+    const accepted = [];
+    const rejected = [];
+    for (const file of list) {
+      const result = await validateImage(file, SLIDESHOW_PRESET);
+      if (result.ok) {
+        // eslint-disable-next-line no-await-in-loop
+        accepted.push(await fileToDataUrl(file));
+      } else {
+        rejected.push(`${file.name}: ${result.error}`);
+      }
+    }
+    if (accepted.length > 0) {
+      setImages((prev) => [...prev, ...accepted].slice(0, MAX_ABOUT_IMAGES));
+    }
+    if (rejected.length > 0) {
+      setError(rejected.join(" · "));
+    }
   };
 
   const removeImage = (idx) => setImages((prev) => prev.filter((_, i) => i !== idx));
@@ -101,7 +110,7 @@ const AboutUsEditor = () => {
             <input
               ref={inputRef}
               type="file"
-              accept="image/*"
+              accept="image/png,image/jpeg,image/webp"
               multiple
               className="hidden"
               onChange={(e) => {
@@ -119,10 +128,12 @@ const AboutUsEditor = () => {
               <span className="text-sm font-medium">
                 {atLimit ? "Limit reached" : "Click to upload images"}
               </span>
-              <span className="text-xs">PNG, JPG, WEBP</span>
             </button>
+            <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
+              {formatGuideline(SLIDESHOW_PRESET)} · up to {MAX_ABOUT_IMAGES} images
+            </p>
 
-            {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
+            {error && <p className="mt-2 text-xs text-destructive break-words">{error}</p>}
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
               {images.map((src, i) => (

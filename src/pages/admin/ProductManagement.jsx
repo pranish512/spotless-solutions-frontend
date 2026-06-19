@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import AdminSidebar from "@/components/AdminSidebar";
 import ToggleSwitch from "@/components/ToggleSwitch";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import ImageUploadField from "@/components/ImageUploadField";
 import { useAuth } from "@/contexts/AuthContext";
 import { adminMastersService } from "@/services/adminMastersService";
 import { adminProductsService } from "@/services/adminProductsService";
@@ -184,11 +185,9 @@ const ProductManagement = () => {
     }));
   };
 
-  const handleImage = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleImage = (file, dataUrl) => {
     // TODO: API INTEGRATION -> POST /api/admin/products/upload-image (multipart) => { url }
-    setForm((f) => ({ ...f, image: URL.createObjectURL(file) }));
+    setForm((f) => ({ ...f, image: dataUrl || "", imageFile: file || null }));
   };
 
   const handleVideo = (e) => {
@@ -266,7 +265,7 @@ const ProductManagement = () => {
                   <tr><td colSpan={7} className="px-4 py-8 text-center text-sm text-muted-foreground">Loading products...</td></tr>
                 ) : filtered.map((product) => (
                   <tr key={product.id} className="border-t border-border hover:bg-muted/50 transition-colors">
-                    <td className="px-4 py-3 text-sm font-medium text-foreground">{product.name}</td>
+                    <td className="px-4 py-3 text-sm font-medium text-foreground max-w-xs truncate" title={product.name}>{product.name}</td>
                     <td className="px-4 py-3 text-sm text-muted-foreground">{product.category}</td>
                     <td className="px-4 py-3 text-sm font-medium text-foreground">₹{product.sellingPrice}</td>
                     <td className="px-4 py-3 text-sm text-foreground">{product.quantity}</td>
@@ -335,13 +334,13 @@ const ProductManagement = () => {
               onClick={(e) => e.stopPropagation()}
             >
               {/* Sticky header */}
-              <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-border shrink-0">
-                <h3 className="font-display font-bold text-lg sm:text-xl text-foreground">
+              <div className="flex items-center justify-between gap-3 px-4 sm:px-6 py-4 border-b border-border shrink-0">
+                <h3 className="font-display font-bold text-lg sm:text-xl text-foreground flex-1 min-w-0 truncate">
                   {isEditing ? "Edit Product" : "Add Product"}
                 </h3>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="p-1 rounded-md hover:bg-muted"
+                  className="shrink-0 p-1 rounded-md hover:bg-muted"
                   aria-label="Close"
                 >
                   <X className="w-5 h-5" />
@@ -429,18 +428,14 @@ const ProductManagement = () => {
                     </div>
 
                     {/* Image */}
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-1">Product Image</label>
-                      <div className="flex items-center gap-3">
-                        <div className="w-16 h-16 rounded-lg bg-muted overflow-hidden flex items-center justify-center shrink-0">
-                          {form.image ? (
-                            <img src={form.image} alt="Product" className="w-full h-full object-cover" />
-                          ) : (
-                            <Upload className="w-5 h-5 text-muted-foreground" />
-                          )}
-                        </div>
-                        <input type="file" accept="image/*" onChange={handleImage} className="text-sm min-w-0" />
-                      </div>
+                    <div className="md:col-span-2">
+                      <ImageUploadField
+                        label="Product Image"
+                        presetKey="product"
+                        value={form.image}
+                        onChange={handleImage}
+                        aspectClass="aspect-square"
+                      />
                     </div>
                     {/* Video Demo */}
                     <div>
@@ -456,7 +451,7 @@ const ProductManagement = () => {
 
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-1">Available Quantity *</label>
-                      <input required type="number" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })}
+                      <input required type="number" min="0" step="1" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })}
                         className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
                     </div>
                     <div>
@@ -469,17 +464,17 @@ const ProductManagement = () => {
 
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-1">Actual Price (₹) *</label>
-                      <input required type="number" value={form.actualPrice} onChange={(e) => setForm({ ...form, actualPrice: e.target.value })}
+                      <input required type="number" min="0" step="0.01" value={form.actualPrice} onChange={(e) => setForm({ ...form, actualPrice: e.target.value })}
                         className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-1">Selling Price (₹) *</label>
-                      <input required type="number" value={form.sellingPrice} onChange={(e) => setForm({ ...form, sellingPrice: e.target.value })}
+                      <input required type="number" min="0" step="0.01" value={form.sellingPrice} onChange={(e) => setForm({ ...form, sellingPrice: e.target.value })}
                         className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-1">Discount (%)</label>
-                      <input type="number" value={form.discount} onChange={(e) => setForm({ ...form, discount: e.target.value })}
+                      <input type="number" min="0" max="100" step="1" value={form.discount} onChange={(e) => setForm({ ...form, discount: e.target.value })}
                         className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
                     </div>
                     <div>
@@ -543,7 +538,7 @@ const ProductManagement = () => {
                           {form.bundleItems.map((bi, idx) => (
                             <div
                               key={idx}
-                              className="grid grid-cols-1 sm:grid-cols-[1fr_120px_auto] gap-2 items-center"
+                              className="grid grid-cols-1 sm:grid-cols-[1fr_100px_auto] md:grid-cols-[1fr_120px_auto] gap-2 items-center"
                             >
                               {/* TODO: API INTEGRATION -> GET /api/admin/products?simpleOnly=true => { products[] } */}
                               <select
