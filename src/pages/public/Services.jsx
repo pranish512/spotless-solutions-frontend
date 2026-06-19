@@ -3,18 +3,43 @@ import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { ArrowRight, Sparkles } from "lucide-react";
-import { getActiveServices } from "@/lib/services";
+import { apiRequest } from "@/services/api";
 
 const HERO_BG =
   "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=1920&q=80";
 
+const mapService = (item) => ({
+  id: item.id,
+  slug: item.slug,
+  name: item.name,
+  description: item.description || "",
+  image: item.image_url || "",
+  brochureName: item.brochure_name || "",
+  brochureUrl: item.brochure_url || "",
+});
+
 const Services = () => {
   const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     document.title = "Our Services · Spotless Solutions";
-    // TODO: API INTEGRATION -> GET /api/services?status=active
-    setServices(getActiveServices());
+    let active = true;
+    (async () => {
+      try {
+        const response = await apiRequest("/services?limit=100");
+        if (!active) return;
+        setServices((response?.items || []).map(mapService));
+      } catch (err) {
+        if (active) setError(err?.message || "Unable to load services.");
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
   }, []);
 
   return (
@@ -46,7 +71,11 @@ const Services = () => {
             </p>
           </div>
 
-          {services.length === 0 ? (
+          {loading ? (
+            <div className="text-center text-muted-foreground py-16">Loading services…</div>
+          ) : error ? (
+            <div className="text-center text-destructive py-16">{error}</div>
+          ) : services.length === 0 ? (
             <div className="text-center text-muted-foreground py-16">No services are available right now.</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

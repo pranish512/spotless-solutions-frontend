@@ -1,79 +1,73 @@
-# Spotless Solutions — Frontend
+# Welcome to your Lovable project
 
-React + Vite + Tailwind storefront and admin console for Spotless Solutions.
-The app talks to a FastAPI backend at `http://localhost:8000` by default.
+## Project info
 
-## Local development
+**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
 
-Prerequisites: Node.js 18+ and npm (install via [nvm](https://github.com/nvm-sh/nvm#installing-and-updating)).
+## How can I edit this code?
+
+There are several ways of editing your application.
+
+**Use Lovable**
+
+Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+
+Changes made via Lovable will be committed automatically to this repo.
+
+**Use your preferred IDE**
+
+If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+
+The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+
+Follow these steps:
 
 ```sh
-# 1. Clone the repo
+# Step 1: Clone the repository using the project's Git URL.
 git clone <YOUR_GIT_URL>
-cd spotless-solutions-frontend
 
-# 2. Install dependencies
-npm install
+# Step 2: Navigate to the project directory.
+cd <YOUR_PROJECT_NAME>
 
-# 3. Copy the env template — required before `npm run dev`
-cp .env.example .env
+# Step 3: Install the necessary dependencies.
+npm i
 
-# 4. Start the dev server (http://localhost:8080)
+# Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
 
-### Environment variables
+**Edit a file directly in GitHub**
 
-All client-exposed variables live in `.env` (see `.env.example`):
+- Navigate to the desired file(s).
+- Click the "Edit" button (pencil icon) at the top right of the file view.
+- Make your changes and commit the changes.
 
-| Variable | Purpose |
-| --- | --- |
-| `VITE_API_BASE_URL` | Backend API base, e.g. `http://localhost:8000/api`. If blank, Vite proxies `/api` → `http://localhost:8000`. |
-| `VITE_APP_NAME` | Display name shown in the UI. |
-| `VITE_APP_ENV` | `development` / `staging` / `production`. |
-| `VITE_GOOGLE_CLIENT_ID` | Google OAuth client (optional, leave blank until wired). |
-| `VITE_RAZORPAY_KEY_ID` | Razorpay publishable key (optional). |
-| `VITE_ASSETS_BASE_URL` | CDN/asset host override (optional). |
-| `VITE_FEATURE_ADMIN_SERVICES` | Set to `true` once backend exposes `/api/admin/services`. |
+**Use GitHub Codespaces**
 
-`.env` is git-ignored. Never commit real secrets.
+- Navigate to the main page of your repository.
+- Click on the "Code" button (green button) near the top right.
+- Select the "Codespaces" tab.
+- Click on "New codespace" to launch a new Codespace environment.
+- Edit files directly within the Codespace and commit and push your changes once you're done.
 
-## Troubleshooting
+## What technologies are used for this project?
 
-**Blank page on http://localhost:8080 after `git pull`**
-Stale Vite dependency cache after a lockfile change is the usual cause.
-Clear it and restart:
+This project is built with:
 
-```sh
-rm -rf node_modules/.vite
-npm run dev
-```
+- Vite
+- TypeScript
+- React
+- shadcn-ui
+- Tailwind CSS
 
-If that doesn't help, also delete `node_modules` and reinstall:
+## How can I deploy this project?
 
-```sh
-rm -rf node_modules
-npm install
-npm run dev
-```
+Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
 
-**"Cannot reach backend" on login**
-Make sure the FastAPI server is running on `http://localhost:8000` and that
-its CORS config allows `http://localhost:8080`.
+## Can I connect a custom domain to my Lovable project?
 
-## Architecture notes
+Yes, you can!
 
-- All HTTP calls go through `src/services/*Service.js` → `apiRequest` in
-  `src/services/api.js`. Do not inline `fetch` in components.
-- Auth uses JWT in `localStorage` with refresh-token rotation.
-- Admin screen access is gated by `ProtectedRoute` against the backend
-  `AppScreenEnum`. The Services admin module currently reuses the
-  `products` screen key because `services` is not yet part of
-  `AppScreenEnum` server-side.
-- `/api/admin/services` endpoints are not implemented yet; the Services
-  admin screen is gated behind `VITE_FEATURE_ADMIN_SERVICES` and falls
-  back to `localStorage` data in local dev.
+To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
-## Tech stack
-
-Vite · React 18 · TypeScript/JSX · Tailwind CSS · shadcn-ui · react-router-dom v6
+Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)

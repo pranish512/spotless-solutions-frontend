@@ -1,8 +1,9 @@
-// API client placeholder — central fetch wrapper used by feature services.
+// API client — central fetch wrapper used by feature services.
 // Keeps inline `fetch` / business logic out of UI components.
 import { storage, STORAGE_KEYS } from "./storage";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+const SESSION_ID_KEY = "ss_session_id";
 
 const isFormData = (body) => typeof FormData !== "undefined" && body instanceof FormData;
 
@@ -13,6 +14,42 @@ export function buildQuery(params = {}) {
   });
   const text = query.toString();
   return text ? `?${text}` : "";
+}
+
+// Stable per-device identifier sent on every request. Used by the cart resolver
+// on the backend for guest carts, and to merge guest cart → user cart on login.
+export function getOrCreateSessionId() {
+  if (typeof window === "undefined") return "";
+  try {
+    let id = window.localStorage.getItem(SESSION_ID_KEY);
+    if (!id) {
+      id = (typeof crypto !== "undefined" && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : `sid-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+      window.localStorage.setItem(SESSION_ID_KEY, id);
+    }
+    return id;
+  } catch {
+    return "";
+  }
+}
+
+// Convert backend image paths (e.g. "attachment/images/products/abc.jpg") into
+// browser-loadable URLs. External URLs (http/https) and inline data: URLs pass
+// through unchanged. Blob URLs are local-session-only and not usable across
+// requests, so we drop them.
+export function resolveImageUrl(pathOrUrl) {
+  if (!pathOrUrl) return "";
+  if (pathOrUrl.startsWith("blob:")) return "";
+  if (
+    pathOrUrl.startsWith("http://") ||
+    pathOrUrl.startsWith("https://") ||
+    pathOrUrl.startsWith("data:")
+  ) {
+    return pathOrUrl;
+  }
+  const origin = BASE_URL.replace(/\/api\/?$/, "");
+  return `${origin}/${pathOrUrl.replace(/^\//, "")}`;
 }
 
 async function refreshAccessToken() {
@@ -41,11 +78,13 @@ async function refreshAccessToken() {
 export async function apiRequest(path, { method = "GET", body, headers = {}, skipAuthRefresh = false } = {}) {
   const token = storage.get(STORAGE_KEYS.AUTH_TOKEN);
   const formData = isFormData(body);
+  const sessionId = getOrCreateSessionId();
   const res = await fetch(`${BASE_URL}${path}`, {
     method,
     headers: {
       ...(formData ? {} : { "Content-Type": "application/json" }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(sessionId ? { "X-Session-Id": sessionId } : {}),
       ...headers,
     },
     body: body ? (formData ? body : JSON.stringify(body)) : undefined,

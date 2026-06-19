@@ -78,7 +78,7 @@ const Header = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full h-11 pl-4 pr-12 rounded-lg border border-border bg-muted/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring font-body"
             />
-            <button type="submit" className="absolute right-1 top-1 h-9 w-10 flex items-center justify-center rounded-md bg-primary text-primary-foreground hover:opacity-90 transition-opacity">
+            <button type="submit" className="absolute right-1 top-1 h-9 w-10 flex items-center justify-center rounded-md bg-primary text-primary-foreground hover:opacity-90 transition-opacity" aria-label="Search">
               <Search className="w-4 h-4" />
             </button>
           </div>
@@ -151,9 +151,9 @@ const Header = () => {
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-10 pl-4 pr-10 rounded-lg border border-border bg-muted/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring font-body"
+                className="w-full h-11 pl-4 pr-12 rounded-lg border border-border bg-muted/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring font-body"
               />
-              <button type="submit" className="absolute right-2 top-2">
+              <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 p-1" aria-label="Search">
                 <Search className="w-5 h-5 text-muted-foreground" />
               </button>
             </div>

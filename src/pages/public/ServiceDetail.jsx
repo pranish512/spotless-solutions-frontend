@@ -7,7 +7,17 @@ import {
   Download, FileText, ShieldCheck, Users, BadgeCheck, Headphones,
   CheckCircle2, ArrowRight, Phone, Mail, MessageSquare, Building2, Factory, GraduationCap, Hospital,
 } from "lucide-react";
-import { getActiveServices, getServiceBySlug } from "@/lib/services";
+import { apiRequest } from "@/services/api";
+
+const mapService = (item) => ({
+  id: item.id,
+  slug: item.slug,
+  name: item.name,
+  description: item.description || "",
+  image: item.image_url || "",
+  brochureName: item.brochure_name || "",
+  brochureUrl: item.brochure_url || "",
+});
 
 const stripHtml = (html) => (html || "").replace(/<[^>]*>/g, "").trim();
 
@@ -33,17 +43,44 @@ const ServiceDetail = () => {
   const navigate = useNavigate();
   const [service, setService] = useState(null);
   const [all, setAll] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: API INTEGRATION -> GET /api/services/{slug}
-    const list = getActiveServices();
-    setAll(list);
-    const found = getServiceBySlug(slug);
-    setService(found || null);
-    document.title = found ? `${found.name} · Spotless Solutions` : "Service · Spotless Solutions";
+    let active = true;
+    setLoading(true);
+    (async () => {
+      try {
+        const [detailResponse, listResponse] = await Promise.all([
+          apiRequest(`/services/${slug}`).catch(() => null),
+          apiRequest("/services?limit=100").catch(() => ({ items: [] })),
+        ]);
+        if (!active) return;
+        const found = detailResponse?.data ? mapService(detailResponse.data) : null;
+        setService(found);
+        setAll((listResponse?.items || []).map(mapService));
+        document.title = found ? `${found.name} · Spotless Solutions` : "Service · Spotless Solutions";
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
   }, [slug]);
 
   const related = useMemo(() => all.filter((s) => s.slug !== slug).slice(0, 3), [all, slug]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Header />
+        <main className="flex-1 container mx-auto px-4 py-20 text-center text-muted-foreground">
+          Loading service…
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!service) {
     return (

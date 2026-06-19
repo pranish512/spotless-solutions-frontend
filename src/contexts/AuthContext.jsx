@@ -52,6 +52,12 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
+  const notifyAuthChanged = () => {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("auth:changed"));
+    }
+  };
+
   const login = useCallback(async (email, password) => {
     setLoading(true);
     try {
@@ -59,6 +65,7 @@ export const AuthProvider = ({ children }) => {
       storage.set(STORAGE_KEYS.AUTH_TOKEN, token);
       if (refreshToken) storage.set(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
       setUser(u);
+      notifyAuthChanged();
       return u;
     } finally {
       setLoading(false);
@@ -72,6 +79,7 @@ export const AuthProvider = ({ children }) => {
       storage.set(STORAGE_KEYS.AUTH_TOKEN, token);
       if (refreshToken) storage.set(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
       setUser(u);
+      notifyAuthChanged();
       return u;
     } finally {
       setLoading(false);
@@ -86,6 +94,7 @@ export const AuthProvider = ({ children }) => {
       storage.remove(STORAGE_KEYS.AUTH_TOKEN);
       storage.remove(STORAGE_KEYS.REFRESH_TOKEN);
       setUser(null);
+      notifyAuthChanged();
     }
   }, []);
 
