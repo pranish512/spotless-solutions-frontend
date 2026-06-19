@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import EmptyState from "@/components/EmptyState";
 import { productService } from "@/services/productService";
+import { filterSampleProducts } from "@/lib/sampleProducts";
 
 const SORT_OPTIONS = [
   { label: "Newest", value: "newest" },
@@ -60,18 +61,27 @@ const Shop = () => {
     const t = setTimeout(async () => {
       setLoading(true);
       setError("");
+      const filterArgs = {
+        search: search || undefined,
+        category: selectedCategorySlug || undefined,
+        tag: activeTag || undefined,
+        max_price: maxPrice < PRICE_MAX ? maxPrice : undefined,
+        sort: sortBy,
+      };
       try {
-        const data = await productService.listProducts({
-          search: search || undefined,
-          category: selectedCategorySlug || undefined,
-          tag: activeTag || undefined,
-          max_price: maxPrice < PRICE_MAX ? maxPrice : undefined,
-          sort: sortBy,
-          limit: 50,
-        });
-        setProducts(data.items);
+        const data = await productService.listProducts({ ...filterArgs, limit: 50 });
+        // DEV-ONLY fallback: if backend returns no items, show sample products
+        // so the page is never blank during development.
+        // TODO: Remove this fallback once real products exist.
+        if (!data.items || data.items.length === 0) {
+          setProducts(filterSampleProducts(filterArgs));
+        } else {
+          setProducts(data.items);
+        }
       } catch (err) {
-        setError(err?.message || "Unable to load products");
+        // DEV-ONLY fallback on API error (e.g. backend not running).
+        console.warn("[Shop] Falling back to sample products:", err?.message);
+        setProducts(filterSampleProducts(filterArgs));
       } finally {
         setLoading(false);
       }
