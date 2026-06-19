@@ -4,13 +4,21 @@
 export const IMAGE_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
 
 // Common presets so screens stay consistent.
+// `width`/`height` represent the recommended upload dimensions for retina-sharp
+// rendering at the display location. Aspect ratio is enforced at 95% accuracy
+// (5% tolerance) so customer-facing screens never look stretched or cropped.
 export const IMAGE_PRESETS = {
-  service:   { width: 1200, height: 800,  maxMB: 5, label: "Service image" },
-  product:   { width: 1000, height: 1000, maxMB: 5, label: "Product image" },
-  banner:    { width: 1920, height: 720,  maxMB: 5, label: "Banner image" },
-  hero:      { width: 1920, height: 1080, maxMB: 5, label: "Hero image" },
-  about:     { width: 1600, height: 900,  maxMB: 5, label: "About us image" },
-  profile:   { width: 512,  height: 512,  maxMB: 2, label: "Profile photo" },
+  service:    { width: 1200, height: 800,  maxMB: 3, label: "Service image" },
+  product:    { width: 1000, height: 1000, maxMB: 3, label: "Product image" },
+  banner:     { width: 1920, height: 720,  maxMB: 4, label: "Banner image" },
+  hero:       { width: 1920, height: 1080, maxMB: 4, label: "Hero image" },
+  about:      { width: 1600, height: 900,  maxMB: 3, label: "About us image" },
+  profile:    { width: 512,  height: 512,  maxMB: 2, label: "Profile photo" },
+  category:   { width: 256,  height: 256,  maxMB: 1, label: "Category icon" },
+  tag:        { width: 128,  height: 128,  maxMB: 1, label: "Tag icon" },
+  brand:      { width: 400,  height: 400,  maxMB: 1, label: "Brand / manufacturer logo" },
+  offer:      { width: 1200, height: 400,  maxMB: 2, label: "Offer banner" },
+  slideshow:  { width: 1600, height: 900,  maxMB: 3, label: "Slideshow image" },
 };
 
 const ASPECT_TOLERANCE = 0.05; // 5% — keep 95% aspect-ratio accuracy

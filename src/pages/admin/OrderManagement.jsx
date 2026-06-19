@@ -90,8 +90,8 @@ const OrderManagement = () => {
         <h2 className="font-display font-bold text-2xl text-foreground mb-6">Order Management</h2>
 
         {/* Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-          <div className="relative md:col-span-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+          <div className="relative sm:col-span-2 lg:col-span-2">
             <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
             <input
               value={search}
@@ -279,11 +279,17 @@ const OrderManagement = () => {
                 <textarea
                   required
                   rows={5}
+                  minLength={10}
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}
                   placeholder="Please provide a clear reason for cancelling this order..."
                   className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body resize-none"
                 />
+                {cancelReason && cancelReason.trim().length < 10 && (
+                  <p className="mt-1 text-xs text-destructive">
+                    Reason must be at least 10 characters.
+                  </p>
+                )}
                 <div className="flex gap-3 pt-4">
                   <button
                     type="button"

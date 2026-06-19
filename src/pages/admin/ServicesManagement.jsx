@@ -8,7 +8,6 @@ import RichTextRenderer from "@/components/RichTextRenderer";
 import ImageUploadField from "@/components/ImageUploadField";
 import { Plus, Pencil, Trash2, Search, Upload, FileText, ImageIcon } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { loadServices, saveServices, makeServiceSlug } from "@/lib/services";
 import { adminServicesService } from "@/services/adminServicesService";
 import { fileToDataUrl } from "@/lib/imageValidation";
 
@@ -32,41 +31,32 @@ const ServicesManagement = () => {
   const canWrite = isAdmin || can("services", "write");
   const canDelete = isAdmin || can("services", "delete");
 
-  const [items, setItems] = useState(loadServices());
+  const [items, setItems] = useState([]);
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   // image input is managed inside ImageUploadField
   const pdfRef = useRef(null);
 
-  useEffect(() => { saveServices(items); }, [items]);
+  const reload = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const data = await adminServicesService.listServices({ limit: 100 });
+      setItems(data.items);
+    } catch (err) {
+      setError(err?.message || "Unable to load services.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const load = async () => {
-      // Feature flag: backend /api/admin/services endpoints are not built yet.
-      // Skip the network call in local dev to avoid noisy errors; fall back to
-      // the localStorage-cached items already loaded into state.
-      if (import.meta.env.VITE_FEATURE_ADMIN_SERVICES !== "true") {
-        return;
-      }
-      setLoading(true);
-      setError("");
-      try {
-        // TODO: API INTEGRATION -> GET /api/admin/services => { items: [...] }
-        const data = await adminServicesService.listServices({ limit: 100 });
-        setItems(data.items);
-      } catch (err) {
-        // Soft-fail to local cache so UI stays usable in offline/dev.
-        setError("");
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+    reload();
   }, []);
 
   const filtered = items.filter((s) =>
@@ -107,23 +97,16 @@ const ServicesManagement = () => {
     if (!stripHtml(form.description)) return setError("Description is required.");
     if (!form.image) return setError("Service image is required.");
 
-
-    const slug = makeServiceSlug(form.name);
     try {
       if (editingId) {
-        // TODO: API INTEGRATION -> PUT /api/admin/services/{id} (multipart)
-        let updated;
-        try { updated = await adminServicesService.updateService(editingId, form); } catch { updated = null; }
-        const next = updated || { id: editingId, slug, ...form };
-        setItems((prev) => prev.map((s) => (s.id === editingId ? { ...s, ...next } : s)));
+        const updated = await adminServicesService.updateService(editingId, form);
+        setItems((prev) => prev.map((s) => (s.id === editingId ? updated : s)));
       } else {
-        // TODO: API INTEGRATION -> POST /api/admin/services (multipart)
-        let created;
-        try { created = await adminServicesService.createService(form); } catch { created = null; }
-        const next = created || { id: `svc-${Date.now()}`, slug, ...form };
-        setItems((prev) => [next, ...prev]);
+        const created = await adminServicesService.createService(form);
+        setItems((prev) => [created, ...prev]);
       }
-      setShowModal(false); setEditingId(null);
+      setShowModal(false);
+      setEditingId(null);
     } catch (err) {
       setError(err.message || "Unable to save service.");
     }
@@ -134,9 +117,8 @@ const ServicesManagement = () => {
     if (!current) return;
     const nextStatus = current.status === "Active" ? "Inactive" : "Active";
     try {
-      // TODO: API INTEGRATION -> PATCH /api/admin/services/{id}/status
-      try { await adminServicesService.toggleService(id, nextStatus); } catch {}
-      setItems((prev) => prev.map((s) => (s.id === id ? { ...s, status: nextStatus } : s)));
+      const updated = await adminServicesService.toggleService(id, nextStatus);
+      setItems((prev) => prev.map((s) => (s.id === id ? updated : s)));
     } catch (err) {
       setError(err.message || "Unable to update service status.");
     }
@@ -144,12 +126,12 @@ const ServicesManagement = () => {
 
   const handleDelete = async () => {
     try {
-      // TODO: API INTEGRATION -> DELETE /api/admin/services/{id}
-      try { await adminServicesService.deleteService(confirmDeleteId); } catch {}
+      await adminServicesService.deleteService(confirmDeleteId);
       setItems((prev) => prev.filter((s) => s.id !== confirmDeleteId));
       setConfirmDeleteId(null);
     } catch (err) {
       setError(err.message || "Unable to delete service.");
+      setConfirmDeleteId(null);
     }
   };
 

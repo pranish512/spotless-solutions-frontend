@@ -1,13 +1,27 @@
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
-import { Camera, Plus, Pencil, Trash2, Package, LifeBuoy, MapPin, X } from "lucide-react";
+import { Camera, Plus, Pencil, Trash2, Package, LifeBuoy, MapPin, X, Star } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
+import { validateImage, fileToDataUrl, formatGuideline, IMAGE_PRESETS } from "@/lib/imageValidation";
+import { addressService } from "@/services/addressService";
 
 const MAX_ADDRESSES = 4;
 
-const emptyAddress = { id: "", label: "Home", line1: "", city: "", state: "", pincode: "", phone: "" };
+const emptyAddress = {
+  id: "",
+  label: "Home",
+  fullName: "",
+  line1: "",
+  line2: "",
+  city: "",
+  state: "",
+  pincode: "",
+  country: "India",
+  phone: "",
+  isDefault: false,
+};
 
 const Profile = () => {
   const { user } = useAuth();
@@ -23,18 +37,48 @@ const Profile = () => {
     profilePicture: "",
   });
 
-  const [addresses, setAddresses] = useState([
-    { id: "a1", label: "Home", line1: "12, MG Road", city: "Bengaluru", state: "KA", pincode: "560001", phone: "+91 98765 43210" },
-  ]);
+  const [addresses, setAddresses] = useState([]);
+  const [addressLoading, setAddressLoading] = useState(true);
+  const [addressError, setAddressError] = useState("");
+  const [addressSaving, setAddressSaving] = useState(false);
 
   const [showAddrModal, setShowAddrModal] = useState(false);
   const [addrForm, setAddrForm] = useState(emptyAddress);
+  const [pictureError, setPictureError] = useState("");
   const fileRef = useRef(null);
 
-  const handlePicture = (e) => {
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      setAddressLoading(true);
+      setAddressError("");
+      try {
+        const data = await addressService.listAddresses({ limit: 50 });
+        if (active) setAddresses(data.items);
+      } catch (err) {
+        if (active) setAddressError(err?.message || "Unable to load addresses");
+      } finally {
+        if (active) setAddressLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const handlePicture = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setProfile((p) => ({ ...p, profilePicture: URL.createObjectURL(file) }));
+    setPictureError("");
+    const result = await validateImage(file, IMAGE_PRESETS.profile);
+    if (!result.ok) {
+      setPictureError(result.error);
+      if (fileRef.current) fileRef.current.value = "";
+      return;
+    }
+    const dataUrl = await fileToDataUrl(file);
+    // TODO: API INTEGRATION -> POST /api/user/profile/picture (multipart) => { url }
+    setProfile((p) => ({ ...p, profilePicture: dataUrl }));
   };
 
   const saveProfile = (e) => {
@@ -53,21 +97,47 @@ const Profile = () => {
     setShowAddrModal(true);
   };
 
-  const saveAddress = (e) => {
+  const saveAddress = async (e) => {
     e.preventDefault();
-    if (addrForm.id) {
-      // TODO: API INTEGRATION -> PUT /api/user/addresses/{id} { ...addrForm } => { address }
-      setAddresses((prev) => prev.map((a) => (a.id === addrForm.id ? addrForm : a)));
-    } else {
-      // TODO: API INTEGRATION -> POST /api/user/addresses { ...addrForm } => { address }
-      setAddresses((prev) => [...prev, { ...addrForm, id: String(Date.now()) }]);
+    if (addressSaving) return;
+    setAddressSaving(true);
+    setAddressError("");
+    try {
+      if (addrForm.id) {
+        const updated = await addressService.updateAddress(addrForm.id, addrForm);
+        setAddresses((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
+      } else {
+        const created = await addressService.createAddress(addrForm);
+        setAddresses((prev) => [created, ...prev]);
+      }
+      setShowAddrModal(false);
+    } catch (err) {
+      setAddressError(err?.message || "Unable to save address");
+    } finally {
+      setAddressSaving(false);
     }
-    setShowAddrModal(false);
   };
 
-  const deleteAddress = (id) => {
-    // TODO: API INTEGRATION -> DELETE /api/user/addresses/{id} => { success }
-    setAddresses((prev) => prev.filter((a) => a.id !== id));
+  const deleteAddress = async (id) => {
+    setAddressError("");
+    try {
+      await addressService.deleteAddress(id);
+      setAddresses((prev) => prev.filter((a) => a.id !== id));
+    } catch (err) {
+      setAddressError(err?.message || "Unable to delete address");
+    }
+  };
+
+  const setDefault = async (id) => {
+    setAddressError("");
+    try {
+      await addressService.setDefaultAddress(id);
+      setAddresses((prev) =>
+        prev.map((a) => ({ ...a, isDefault: a.id === id }))
+      );
+    } catch (err) {
+      setAddressError(err?.message || "Unable to set default address");
+    }
   };
 
   return (
@@ -79,24 +149,39 @@ const Profile = () => {
         {/* Profile Card */}
         <section className="bg-card rounded-lg shadow-card p-6 mb-6">
           <div className="flex items-start gap-6 flex-wrap">
-            <div className="relative">
-              <div className="w-24 h-24 rounded-full bg-muted overflow-hidden flex items-center justify-center">
-                {profile.profilePicture ? (
-                  <img src={profile.profilePicture} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="font-display font-bold text-2xl text-muted-foreground">
-                    {profile.name?.[0]?.toUpperCase() || "U"}
-                  </span>
-                )}
+            <div className="flex flex-col items-center">
+              <div className="relative">
+                <div className="w-24 h-24 rounded-full bg-muted overflow-hidden flex items-center justify-center">
+                  {profile.profilePicture ? (
+                    <img src={profile.profilePicture} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="font-display font-bold text-2xl text-muted-foreground">
+                      {profile.name?.[0]?.toUpperCase() || "U"}
+                    </span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition-opacity"
+                  aria-label="Change profile picture"
+                >
+                  <Camera className="w-4 h-4" />
+                </button>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={handlePicture}
+                  className="hidden"
+                />
               </div>
-              <button
-                type="button"
-                onClick={() => fileRef.current?.click()}
-                className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition-opacity"
-              >
-                <Camera className="w-4 h-4" />
-              </button>
-              <input ref={fileRef} type="file" accept="image/*" onChange={handlePicture} className="hidden" />
+              <p className="mt-2 text-[11px] text-muted-foreground text-center max-w-[160px] leading-tight">
+                {formatGuideline(IMAGE_PRESETS.profile)}
+              </p>
+              {pictureError && (
+                <p className="mt-1 text-[11px] text-destructive text-center max-w-[160px] leading-tight">{pictureError}</p>
+              )}
             </div>
 
             <form onSubmit={saveProfile} className="flex-1 min-w-[260px] grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -154,28 +239,52 @@ const Profile = () => {
             </button>
           </div>
 
-          {addresses.length === 0 ? (
+          {addressError && (
+            <div className="mb-3 p-3 rounded-md bg-destructive/10 text-destructive text-sm">{addressError}</div>
+          )}
+
+          {addressLoading ? (
+            <p className="text-sm text-muted-foreground">Loading addresses…</p>
+          ) : addresses.length === 0 ? (
             <p className="text-sm text-muted-foreground">No addresses added yet.</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {addresses.map((a) => (
-                <div key={a.id} className="border border-border rounded-lg p-4">
+                <div key={a.id} className={`border rounded-lg p-4 ${a.isDefault ? "border-primary bg-primary/5" : "border-border"}`}>
                   <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <span className="inline-block px-2 py-0.5 text-xs font-semibold rounded-md bg-muted text-foreground mb-1">
-                        {a.label}
-                      </span>
-                      <p className="text-sm text-foreground font-medium">{a.line1}</p>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className="inline-block px-2 py-0.5 text-xs font-semibold rounded-md bg-muted text-foreground">
+                          {a.label}
+                        </span>
+                        {a.isDefault && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-md bg-primary/10 text-primary">
+                            <Star className="w-3 h-3" /> Default
+                          </span>
+                        )}
+                      </div>
+                      {a.fullName && <p className="text-sm text-foreground font-medium">{a.fullName}</p>}
+                      <p className="text-sm text-foreground">{a.line1}{a.line2 ? `, ${a.line2}` : ""}</p>
                       <p className="text-sm text-muted-foreground">
                         {a.city}, {a.state} - {a.pincode}
                       </p>
                       <p className="text-sm text-muted-foreground mt-1">{a.phone}</p>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <button onClick={() => openEditAddress(a)} className="p-2 rounded-md hover:bg-muted text-primary transition-colors">
+                      {!a.isDefault && (
+                        <button
+                          onClick={() => setDefault(a.id)}
+                          className="p-2 rounded-md hover:bg-muted text-foreground transition-colors"
+                          title="Set as default"
+                          aria-label="Set as default"
+                        >
+                          <Star className="w-4 h-4" />
+                        </button>
+                      )}
+                      <button onClick={() => openEditAddress(a)} className="p-2 rounded-md hover:bg-muted text-primary transition-colors" aria-label="Edit">
                         <Pencil className="w-4 h-4" />
                       </button>
-                      <button onClick={() => deleteAddress(a.id)} className="p-2 rounded-md hover:bg-destructive/10 text-destructive transition-colors">
+                      <button onClick={() => deleteAddress(a.id)} className="p-2 rounded-md hover:bg-destructive/10 text-destructive transition-colors" aria-label="Delete">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -257,17 +366,37 @@ const Profile = () => {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Address Line</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Full Name *</label>
+                <input
+                  required
+                  value={addrForm.fullName}
+                  onChange={(e) => setAddrForm({ ...addrForm, fullName: e.target.value })}
+                  placeholder="Recipient's name"
+                  className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Address Line 1 *</label>
                 <input
                   required
                   value={addrForm.line1}
                   onChange={(e) => setAddrForm({ ...addrForm, line1: e.target.value })}
+                  placeholder="House / flat number, street"
+                  className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Address Line 2</label>
+                <input
+                  value={addrForm.line2 || ""}
+                  onChange={(e) => setAddrForm({ ...addrForm, line2: e.target.value })}
+                  placeholder="Apartment, landmark (optional)"
                   className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body"
                 />
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">City</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">City *</label>
                   <input
                     required
                     value={addrForm.city}
@@ -276,7 +405,7 @@ const Profile = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">State</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">State *</label>
                   <input
                     required
                     value={addrForm.state}
@@ -285,28 +414,41 @@ const Profile = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Pincode</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">Pincode *</label>
                   <input
                     required
+                    inputMode="numeric"
+                    pattern="[0-9]{5,6}"
                     value={addrForm.pincode}
                     onChange={(e) => setAddrForm({ ...addrForm, pincode: e.target.value })}
                     className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body"
                   />
                 </div>
               </div>
+              <label className="flex items-center gap-2 text-sm text-foreground">
+                <input
+                  type="checkbox"
+                  checked={!!addrForm.isDefault}
+                  onChange={(e) => setAddrForm({ ...addrForm, isDefault: e.target.checked })}
+                  className="w-4 h-4"
+                />
+                Set as default address
+              </label>
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowAddrModal(false)}
-                  className="flex-1 h-11 rounded-lg border border-border text-foreground font-display font-bold text-sm hover:bg-muted transition-colors"
+                  disabled={addressSaving}
+                  className="flex-1 h-11 rounded-lg border border-border text-foreground font-display font-bold text-sm hover:bg-muted transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 h-11 rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm hover:opacity-90 transition-opacity"
+                  disabled={addressSaving}
+                  className="flex-1 h-11 rounded-lg bg-primary text-primary-foreground font-display font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Save Address
+                  {addressSaving ? "Saving…" : "Save Address"}
                 </button>
               </div>
             </form>
