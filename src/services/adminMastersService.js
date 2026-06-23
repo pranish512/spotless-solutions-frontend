@@ -1,4 +1,4 @@
-import { apiRequest, buildQuery } from "./api";
+import { apiRequest, buildQuery, resolveImageUrl } from "./api";
 
 const toUiStatus = (status) => (status === "active" || status === true ? "Active" : "Inactive");
 const toApiStatus = (status) => (status === "Active" ? "active" : "inactive");
@@ -32,16 +32,18 @@ const mapTag = (item) => ({
   icon: item.icon || "",
   color: item.color || "",
   status: toUiStatus(item.active),
+  showInNavbar: !!item.show_in_navbar,
 });
 
 const mapCategory = (item) => ({
   id: item.id,
   name: item.name,
   slug: item.slug,
-  icon: item.icon || "",
+  icon: item.icon || "",                       // stored relative path (for saving)
+  iconUrl: resolveImageUrl(item.icon),         // browser URL (for display)
   parentId: item.parent_id || "",
   sortOrder: item.sort_order || 0,
-  productCount: item.products_count || item.productCount || 0,
+  productCount: item.products_count ?? item.productCount ?? 0,
   status: toUiStatus(item.active),
 });
 
@@ -105,19 +107,35 @@ export const adminMastersService = {
   async createTag(form) {
     const response = await apiRequest("/admin/tags", {
       method: "POST",
-      body: { name: form.name, icon: form.icon || null, color: form.color || null, active: toActive(form.status) },
+      body: {
+        name: form.name,
+        icon: form.icon || null,
+        color: form.color || null,
+        active: toActive(form.status),
+        show_in_navbar: !!form.showInNavbar,
+      },
     });
     return mapTag(response.data);
   },
   async updateTag(id, form) {
     const response = await apiRequest(`/admin/tags/${id}`, {
       method: "PUT",
-      body: { name: form.name, icon: form.icon || null, color: form.color || null, active: toActive(form.status) },
+      body: {
+        name: form.name,
+        icon: form.icon || null,
+        color: form.color || null,
+        active: toActive(form.status),
+        show_in_navbar: !!form.showInNavbar,
+      },
     });
     return mapTag(response.data);
   },
   async toggleTag(id, status) {
     const response = await apiRequest(`/admin/tags/${id}/status${buildQuery({ active: toActive(status) })}`, { method: "PATCH" });
+    return mapTag(response.data);
+  },
+  async toggleTagNavbar(id, show) {
+    const response = await apiRequest(`/admin/tags/${id}/navbar${buildQuery({ show })}`, { method: "PATCH" });
     return mapTag(response.data);
   },
   async deleteTag(id) {
@@ -127,6 +145,13 @@ export const adminMastersService = {
   async listCategories({ page = 1, limit = 100, search = "" } = {}) {
     const response = await apiRequest(`/admin/categories${buildQuery({ page, limit, search })}`);
     return { ...unwrapList(response), items: unwrapList(response).items.map(mapCategory) };
+  },
+  async uploadCategoryIcon(file) {
+    const fd = new FormData();
+    fd.append("file", file);
+    const response = await apiRequest("/admin/categories/upload-icon", { method: "POST", body: fd });
+    const data = response?.data || {};
+    return { path: data.path || "", url: resolveImageUrl(data.path || data.url) };
   },
   async createCategory(form) {
     const response = await apiRequest("/admin/categories", {

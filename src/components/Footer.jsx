@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
-import { ShieldCheck, Truck, RotateCcw, Headphones, Mail, Phone, Clock } from "lucide-react";
+import { ShieldCheck, Truck, RotateCcw, Headphones, Mail, Phone, Clock, MapPin } from "lucide-react";
+import { useNavTags } from "@/hooks/useNavTags";
+import { useReachUs } from "@/hooks/useReachUs";
 
 const trustBadges = [
   { icon: Truck, title: "Fast Delivery", desc: "On all orders" },
@@ -9,6 +11,8 @@ const trustBadges = [
 ];
 
 const Footer = () => {
+  const navTags = useNavTags();
+  const reach = useReachUs();
   return (
     <footer className="bg-muted border-t border-border mt-16">
       {/* Trust strip */}
@@ -39,9 +43,11 @@ const Footer = () => {
           <h4 className="font-display font-semibold text-foreground mb-4">Shop</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li><Link to="/shop" className="hover:text-primary transition-colors">All Products</Link></li>
-            <li><Link to="/shop?filter=new" className="hover:text-primary transition-colors">New Arrivals</Link></li>
-            <li><Link to="/shop?filter=sale" className="hover:text-primary transition-colors">On Sale</Link></li>
-            <li><Link to="/shop?filter=best" className="hover:text-primary transition-colors">Best Sellers</Link></li>
+            {navTags.map((t) => (
+              <li key={t.id}>
+                <Link to={`/shop?tag=${encodeURIComponent(t.name)}`} className="hover:text-primary transition-colors">{t.name}</Link>
+              </li>
+            ))}
           </ul>
         </div>
         <div>
@@ -57,9 +63,29 @@ const Footer = () => {
         <div>
           <h4 className="font-display font-semibold text-foreground mb-4">Reach Us</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li className="flex items-center gap-2"><Mail className="w-4 h-4 text-primary" /> support@spotless.com</li>
-            <li className="flex items-center gap-2"><Phone className="w-4 h-4 text-primary" /> +1 (800) 555-CLEAN</li>
-            <li className="flex items-center gap-2"><Clock className="w-4 h-4 text-primary" /> Mon-Sat / 9 AM - 6 PM</li>
+            {reach.email && (
+              <li className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-primary shrink-0" />
+                <a href={`mailto:${reach.email}`} className="hover:text-primary transition-colors break-all">{reach.email}</a>
+              </li>
+            )}
+            {reach.phone && (
+              <li className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-primary shrink-0" />
+                <a href={`tel:${reach.phone.replace(/[^+\d]/g, "")}`} className="hover:text-primary transition-colors">{reach.phone}</a>
+              </li>
+            )}
+            {reach.availability && (
+              <li className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-primary shrink-0" /> {reach.availability}
+              </li>
+            )}
+            {reach.location && (
+              <li className="flex items-start gap-2">
+                <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                <span className="whitespace-pre-line">{reach.location}</span>
+              </li>
+            )}
           </ul>
         </div>
       </div>

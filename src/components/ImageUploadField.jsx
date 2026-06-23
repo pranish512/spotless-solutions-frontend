@@ -22,6 +22,7 @@ const ImageUploadField = ({
   value = "",
   onChange,
   aspectClass = "aspect-[3/2]",
+  note = "",
 }) => {
   const config = preset || IMAGE_PRESETS[presetKey] || IMAGE_PRESETS.service;
   const inputRef = useRef(null);
@@ -99,6 +100,7 @@ const ImageUploadField = ({
       <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
         {formatGuideline(config)}
       </p>
+      {note && <p className="text-xs text-primary/80 mt-1 leading-relaxed">{note}</p>}
       {error && <p className="text-xs text-destructive mt-1">{error}</p>}
     </div>
   );

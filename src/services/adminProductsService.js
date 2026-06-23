@@ -123,7 +123,8 @@ export const mapAdminProduct = (item, refs = {}) => {
     enableRating: item.enable_rating !== false,
     showRating: item.show_rating !== false,
     active: item.active !== false,
-    avgRating: item.avgRating || 0,
+    avgRating: Number(item.avg_rating ?? 0),
+    ratingCount: Number(item.rating_count ?? 0),
   };
 };
 

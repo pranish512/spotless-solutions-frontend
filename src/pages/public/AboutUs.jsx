@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import RichTextRenderer from "@/components/RichTextRenderer";
-import { policiesService } from "@/lib/policies";
+import { policiesService } from "@/services/policiesService";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const SLUG = "about-us";
@@ -34,14 +34,14 @@ const Slideshow = ({ images }) => {
         <>
           <button
             onClick={() => setIdx((i) => (i - 1 + images.length) % images.length)}
-            className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors"
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/35 backdrop-blur-md border border-white/40 text-white shadow-lg transition-all"
             aria-label="Previous"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
           <button
             onClick={() => setIdx((i) => (i + 1) % images.length)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/35 backdrop-blur-md border border-white/40 text-white shadow-lg transition-all"
             aria-label="Next"
           >
             <ChevronRight className="w-5 h-5" />
@@ -67,12 +67,26 @@ const Slideshow = ({ images }) => {
 const AboutUs = () => {
   const [content, setContent] = useState("");
   const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     document.title = "About Us · Spotless Solutions";
-    // TODO: API INTEGRATION -> GET /api/policies/about-us
-    setContent(policiesService.get(SLUG).content || "");
-    setImages(policiesService.getAboutImages());
+    let active = true;
+    setLoading(true);
+    policiesService
+      .getPublic(SLUG)
+      .then((policy) => {
+        if (!active) return;
+        setContent(policy.content || "");
+        setImages((policy.images || []).map((img) => img.url).filter(Boolean));
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   return (
@@ -92,7 +106,11 @@ const AboutUs = () => {
           )}
 
           <article className="bg-card rounded-2xl shadow-card p-6 sm:p-10">
-            <RichTextRenderer html={content} />
+            {loading ? (
+              <p className="text-muted-foreground">Loading…</p>
+            ) : (
+              <RichTextRenderer html={content} />
+            )}
           </article>
         </div>
       </main>

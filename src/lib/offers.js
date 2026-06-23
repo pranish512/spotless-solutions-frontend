@@ -5,7 +5,7 @@
 const KEY = "offers:list";
 
 const defaultOffers = [
-  { id: "1", title: "Free shipping on orders over $49", description: "Secure checkout", enabled: true, order: 1 },
+  { id: "1", title: "Free shipping on orders overRs.499", description: "Secure checkout", enabled: true, order: 1 },
   { id: "2", title: "Need help?", description: "+1 (800) 555-CLEAN", enabled: true, order: 2 },
 ];
 

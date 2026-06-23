@@ -27,7 +27,7 @@ const AdminProfile = () => {
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen flex-col lg:flex-row">
       <AdminSidebar />
       <main className="flex-1 p-8 bg-muted/30">
         <h2 className="font-display font-bold text-2xl text-foreground mb-6">Admin Profile</h2>

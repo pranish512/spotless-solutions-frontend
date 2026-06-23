@@ -6,24 +6,15 @@ import ToggleSwitch from "@/components/ToggleSwitch";
 import { Plus, Pencil, Trash2, Search } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { adminMastersService } from "@/services/adminMastersService";
+import ImageUploadField from "@/components/ImageUploadField";
 
-// TODO: API INTEGRATION -> GET /api/admin/categories
-const initialCategories = [
-  { id: "1", name: "Cleaning Liquids", slug: "liquids", productCount: 45, status: "Active" },
-  { id: "2", name: "Gloves", slug: "gloves", productCount: 23, status: "Active" },
-  { id: "3", name: "Masks & Safety", slug: "masks", productCount: 18, status: "Active" },
-  { id: "4", name: "Car Cleaning", slug: "car-kits", productCount: 31, status: "Active" },
-  { id: "5", name: "Cleaning Tools", slug: "tools", productCount: 56, status: "Active" },
-  { id: "6", name: "Kitchen Care", slug: "kitchen", productCount: 29, status: "Active" },
-];
-
-const emptyForm = { name: "", slug: "", status: "Active" };
+const emptyForm = { name: "", slug: "", status: "Active", icon: "", iconPreview: "" };
 
 const CategoryManagement = () => {
   const { can } = useAuth();
   const canWrite = can("categories", "write");
   const canDelete = can("categories", "delete");
-  const [categories, setCategories] = useState(initialCategories);
+  const [categories, setCategories] = useState([]);
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -53,8 +44,24 @@ const CategoryManagement = () => {
     c.name.toLowerCase().includes(search.toLowerCase()) || c.slug.toLowerCase().includes(search.toLowerCase())
   );
 
-  const openCreate = () => { setEditingId(null); setForm(emptyForm); setShowModal(true); };
-  const openEdit = (cat) => { setEditingId(cat.id); setForm({ name: cat.name, slug: cat.slug, status: cat.status || "Active" }); setShowModal(true); };
+  const openCreate = () => { setEditingId(null); setForm(emptyForm); setError(""); setShowModal(true); };
+  const openEdit = (cat) => {
+    setEditingId(cat.id);
+    setForm({ name: cat.name, slug: cat.slug, status: cat.status || "Active", icon: cat.icon || "", iconPreview: cat.iconUrl || "" });
+    setError("");
+    setShowModal(true);
+  };
+
+  const handleIcon = async (file, dataUrl) => {
+    if (!file) { setForm((f) => ({ ...f, icon: "", iconPreview: "" })); return; }
+    setForm((f) => ({ ...f, iconPreview: dataUrl }));   // instant local preview
+    try {
+      const { path, url } = await adminMastersService.uploadCategoryIcon(file);
+      setForm((f) => ({ ...f, icon: path, iconPreview: url || dataUrl }));
+    } catch (err) {
+      setError(err.message || "Unable to upload image.");
+    }
+  };
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -102,7 +109,7 @@ const CategoryManagement = () => {
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen flex-col lg:flex-row">
       <AdminSidebar />
       <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-muted/30 min-w-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 sm:mb-8">
@@ -173,6 +180,14 @@ const CategoryManagement = () => {
               <input required value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })}
                 className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body" />
             </div>
+            <ImageUploadField
+              label="Category Image"
+              presetKey="category"
+              value={form.iconPreview}
+              onChange={handleIcon}
+              aspectClass="aspect-square"
+              note="Use a clear PNG with a white or transparent background — a centered, square (1:1) icon keeps the storefront category circles crisp and consistent."
+            />
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Status</label>
               <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}

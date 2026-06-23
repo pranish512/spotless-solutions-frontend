@@ -35,10 +35,19 @@ export function getOrCreateSessionId() {
 }
 
 // Convert backend image paths (e.g. "attachment/images/products/abc.jpg") into
-// browser-loadable URLs. External URLs (Unsplash etc.) pass through unchanged.
+// browser-loadable URLs. External URLs (http/https) and inline data: URLs pass
+// through unchanged. Blob URLs are local-session-only and not usable across
+// requests, so we drop them.
 export function resolveImageUrl(pathOrUrl) {
   if (!pathOrUrl) return "";
-  if (pathOrUrl.startsWith("http://") || pathOrUrl.startsWith("https://")) return pathOrUrl;
+  if (pathOrUrl.startsWith("blob:")) return "";
+  if (
+    pathOrUrl.startsWith("http://") ||
+    pathOrUrl.startsWith("https://") ||
+    pathOrUrl.startsWith("data:")
+  ) {
+    return pathOrUrl;
+  }
   const origin = BASE_URL.replace(/\/api\/?$/, "");
   return `${origin}/${pathOrUrl.replace(/^\//, "")}`;
 }

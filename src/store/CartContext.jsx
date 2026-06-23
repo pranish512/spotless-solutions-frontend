@@ -66,27 +66,43 @@ export const CartProvider = ({ children }) => {
       });
       setCart(next);
       return next;
+    } catch (err) {
+      await refresh();
+      throw err;
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [refresh]);
 
   const updateQuantity = useCallback(async (itemId, quantity) => {
-    if (quantity <= 0) {
+    try {
+      if (quantity <= 0) {
+        const next = await cartService.removeItem(itemId);
+        setCart(next);
+        return next;
+      }
+      const next = await cartService.updateItem(itemId, { quantity });
+      setCart(next);
+      return next;
+    } catch (err) {
+      // Stale cart — e.g. the item id no longer exists after a guest→user cart
+      // switch. Resync from the server so the UI self-heals instead of leaving a
+      // phantom item ("Cart item not found") until a manual page refresh.
+      await refresh();
+      throw err;
+    }
+  }, [refresh]);
+
+  const removeItem = useCallback(async (itemId) => {
+    try {
       const next = await cartService.removeItem(itemId);
       setCart(next);
       return next;
+    } catch (err) {
+      await refresh();
+      throw err;
     }
-    const next = await cartService.updateItem(itemId, { quantity });
-    setCart(next);
-    return next;
-  }, []);
-
-  const removeItem = useCallback(async (itemId) => {
-    const next = await cartService.removeItem(itemId);
-    setCart(next);
-    return next;
-  }, []);
+  }, [refresh]);
 
   const clear = useCallback(async () => {
     const next = await cartService.clearCart();
@@ -97,7 +113,10 @@ export const CartProvider = ({ children }) => {
   const value = useMemo(
     () => ({
       items: cart.items,
-      count: cart.itemCount,
+      // Header badge = number of distinct products in the cart, not the sum of
+      // quantities. Bumping an item's quantity must not change this count.
+      count: cart.items.length,
+      totalQuantity: cart.itemCount,
       total: cart.subtotal,
       cart,
       loading,

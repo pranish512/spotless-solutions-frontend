@@ -3,25 +3,18 @@ import AdminSidebar from "@/components/AdminSidebar";
 import ResponsiveModal from "@/components/ResponsiveModal";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import ToggleSwitch from "@/components/ToggleSwitch";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Info } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { adminMastersService } from "@/services/adminMastersService";
 
-// TODO: API INTEGRATION -> GET /api/admin/tags
-const initialTags = [
-  { id: "1", name: "Eco-Friendly", icon: "🌿", status: "Active" },
-  { id: "2", name: "Best Seller", icon: "🔥", status: "Active" },
-  { id: "3", name: "New Arrival", icon: "✨", status: "Active" },
-  { id: "4", name: "On Sale", icon: "🏷️", status: "Active" },
-];
-
-const emptyForm = { name: "", icon: "", status: "Active" };
+const NAVBAR_LIMIT = 3;
+const emptyForm = { name: "", icon: "", status: "Active", showInNavbar: false };
 
 const TagsManagement = () => {
   const { can } = useAuth();
   const canWrite = can("tags", "write");
   const canDelete = can("tags", "delete");
-  const [tags, setTags] = useState(initialTags);
+  const [tags, setTags] = useState([]);
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -35,7 +28,6 @@ const TagsManagement = () => {
       setLoading(true);
       setError("");
       try {
-        // TODO: API INTEGRATION -> GET /api/admin/tags
         const data = await adminMastersService.listTags({ limit: 100 });
         setTags(data.items);
       } catch (err) {
@@ -48,20 +40,25 @@ const TagsManagement = () => {
   }, []);
 
   const filtered = tags.filter((t) => t.name.toLowerCase().includes(search.toLowerCase()));
+  const navbarCount = tags.filter((t) => t.showInNavbar).length;
+  const navbarFull = navbarCount >= NAVBAR_LIMIT;
 
-  const openCreate = () => { setEditingId(null); setForm(emptyForm); setShowModal(true); };
-  const openEdit = (t) => { setEditingId(t.id); setForm({ name: t.name, icon: t.icon, status: t.status || "Active" }); setShowModal(true); };
+  const openCreate = () => { setEditingId(null); setForm(emptyForm); setError(""); setShowModal(true); };
+  const openEdit = (t) => {
+    setEditingId(t.id);
+    setForm({ name: t.name, icon: t.icon, status: t.status || "Active", showInNavbar: !!t.showInNavbar });
+    setError("");
+    setShowModal(true);
+  };
 
   const handleSave = async (e) => {
     e.preventDefault();
     setError("");
     try {
       if (editingId) {
-        // TODO: API INTEGRATION -> PUT /api/admin/tags/{id}
         const updated = await adminMastersService.updateTag(editingId, form);
         setTags((prev) => prev.map((t) => (t.id === editingId ? updated : t)));
       } else {
-        // TODO: API INTEGRATION -> POST /api/admin/tags
         const created = await adminMastersService.createTag(form);
         setTags((prev) => [created, ...prev]);
       }
@@ -72,7 +69,6 @@ const TagsManagement = () => {
   };
 
   const toggleStatus = async (id) => {
-    // TODO: API INTEGRATION -> PATCH /api/admin/tags/{id}/status
     if (!canWrite) return;
     const current = tags.find((t) => t.id === id);
     if (!current) return;
@@ -85,8 +81,23 @@ const TagsManagement = () => {
     }
   };
 
+  const toggleNavbar = async (tag) => {
+    if (!canWrite) return;
+    setError("");
+    // Block turning on a 4th client-side with a clear message (backend also enforces).
+    if (!tag.showInNavbar && navbarFull) {
+      setError(`Only ${NAVBAR_LIMIT} tags can appear in the navbar. Turn one off first.`);
+      return;
+    }
+    try {
+      const updated = await adminMastersService.toggleTagNavbar(tag.id, !tag.showInNavbar);
+      setTags((prev) => prev.map((t) => (t.id === tag.id ? updated : t)));
+    } catch (err) {
+      setError(err.message || "Unable to update navbar visibility.");
+    }
+  };
+
   const handleDelete = async () => {
-    // TODO: API INTEGRATION -> DELETE /api/admin/tags/{id}
     if (!canDelete) return;
     try {
       await adminMastersService.deleteTag(confirmDeleteId);
@@ -98,7 +109,7 @@ const TagsManagement = () => {
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen flex-col lg:flex-row">
       <AdminSidebar />
       <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-muted/30 min-w-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 sm:mb-8">
@@ -111,6 +122,16 @@ const TagsManagement = () => {
           )}
         </div>
 
+        {/* Navbar capacity note */}
+        <div className={`flex items-start gap-2 mb-4 p-3 rounded-lg text-sm ${navbarFull ? "bg-secondary/20 text-foreground" : "bg-primary/10 text-foreground"}`}>
+          <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+          <p>
+            Up to <strong>{NAVBAR_LIMIT} tags</strong> can appear in the customer navbar &amp; footer — alongside the static
+            “All Products” link. <strong>{navbarCount}/{NAVBAR_LIMIT}</strong> selected.
+            {navbarFull && " Turn one off to feature a different tag."}
+          </p>
+        </div>
+
         <div className="relative max-w-sm mb-6">
           <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search tags..."
@@ -120,24 +141,28 @@ const TagsManagement = () => {
 
         <div className="bg-card rounded-lg shadow-card overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[560px]">
+            <table className="w-full min-w-[680px]">
               <thead className="bg-muted">
                 <tr>
                   <th className="text-left px-4 py-3 text-sm font-medium">Icon</th>
                   <th className="text-left px-4 py-3 text-sm font-medium">Name</th>
                   <th className="text-left px-4 py-3 text-sm font-medium">Status</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium">Show in Navbar</th>
                   <th className="text-right px-4 py-3 text-sm font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={4} className="px-4 py-8 text-center text-sm text-muted-foreground">Loading tags...</td></tr>
+                  <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-muted-foreground">Loading tags...</td></tr>
                 ) : filtered.map((t) => (
                   <tr key={t.id} className="border-t border-border hover:bg-muted/50">
                     <td className="px-4 py-3 text-2xl">{t.icon}</td>
                     <td className="px-4 py-3 text-sm font-medium">{t.name}</td>
                     <td className="px-4 py-3">
                       <ToggleSwitch checked={t.status === "Active"} onChange={() => canWrite && toggleStatus(t.id)} labelOn="Active" labelOff="Inactive" />
+                    </td>
+                    <td className="px-4 py-3">
+                      <ToggleSwitch checked={!!t.showInNavbar} onChange={() => toggleNavbar(t)} labelOn="Shown" labelOff="Hidden" />
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
@@ -148,7 +173,7 @@ const TagsManagement = () => {
                   </tr>
                 ))}
                 {!loading && filtered.length === 0 && (
-                  <tr><td colSpan={4} className="px-4 py-8 text-center text-sm text-muted-foreground">No tags found.</td></tr>
+                  <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-muted-foreground">No tags found.</td></tr>
                 )}
               </tbody>
             </table>
@@ -173,6 +198,23 @@ const TagsManagement = () => {
                 className="w-full h-11 px-4 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring font-body">
                 <option>Active</option><option>Inactive</option>
               </select>
+            </div>
+            <div className="rounded-lg border border-border p-3">
+              <label className="flex items-center gap-2.5 text-sm font-medium text-foreground cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!!form.showInNavbar}
+                  onChange={(e) => setForm({ ...form, showInNavbar: e.target.checked })}
+                  className="w-4 h-4 accent-primary"
+                />
+                Show in customer navbar
+              </label>
+              <p className="text-xs text-muted-foreground mt-1.5">
+                Active + shown tags appear in the storefront navbar &amp; footer (max {NAVBAR_LIMIT}).
+                {!form.showInNavbar && navbarFull && !editingId && (
+                  <span className="text-destructive"> Limit reached — turn one off first.</span>
+                )}
+              </p>
             </div>
             <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
               <button type="button" onClick={() => setShowModal(false)}

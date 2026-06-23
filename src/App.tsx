@@ -1,11 +1,13 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/store/CartContext";
+import { WishlistProvider } from "@/store/WishlistContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 // Public pages
 import Home from "@/pages/public/Home";
 import Shop from "@/pages/public/Shop";
+import ProductDetail from "@/pages/public/ProductDetail";
 import Login from "@/pages/public/Login";
 import Register from "@/pages/public/Register";
 import Cart from "@/pages/public/Cart";
@@ -42,12 +44,14 @@ import ServicesManagement from "@/pages/admin/ServicesManagement";
 
 const App = () => (
   <AuthProvider>
+    <WishlistProvider>
     <CartProvider>
     <BrowserRouter>
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/shop" element={<Shop />} />
+        <Route path="/products/:slug" element={<ProductDetail />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/cart" element={<Cart />} />
@@ -90,6 +94,7 @@ const App = () => (
       </Routes>
     </BrowserRouter>
     </CartProvider>
+    </WishlistProvider>
   </AuthProvider>
 );
 

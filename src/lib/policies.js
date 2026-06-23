@@ -1,6 +1,6 @@
-// Policies registry — single source of truth for policy slugs + defaults.
-// Persisted to localStorage as a placeholder for backend API.
-// TODO: API INTEGRATION -> GET/PUT /api/admin/policies/{slug}
+// Policies registry — single source of truth for the fixed policy slugs, their
+// titles, and public paths. Content + images now live in the backend; the API
+// client is in src/services/policiesService.js.
 
 export const POLICY_DEFS = {
   "cookies-policy": {
@@ -22,34 +22,6 @@ export const POLICY_DEFS = {
     slug: "payment-and-security",
     title: "Payment and Security",
     publicPath: "/policies/payment-security",
-  },
-};
-
-const KEY = (slug) => `policy:${slug}`;
-const IMG_KEY = "policy:about-us:images";
-
-export const policiesService = {
-  get(slug) {
-    try {
-      const raw = localStorage.getItem(KEY(slug));
-      if (!raw) return { content: "" };
-      return JSON.parse(raw);
-    } catch {
-      return { content: "" };
-    }
-  },
-  save(slug, data) {
-    localStorage.setItem(KEY(slug), JSON.stringify({ ...data, updatedAt: Date.now() }));
-  },
-  getAboutImages() {
-    try {
-      return JSON.parse(localStorage.getItem(IMG_KEY) || "[]");
-    } catch {
-      return [];
-    }
-  },
-  saveAboutImages(images) {
-    localStorage.setItem(IMG_KEY, JSON.stringify(images.slice(0, 10)));
   },
 };
 

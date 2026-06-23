@@ -1,14 +1,15 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Search, Heart, ShoppingCart, User, Menu, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { Heart, ShoppingCart, User, Menu, X, LogOut, Package, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/store/CartContext";
+import { useNavTags } from "@/hooks/useNavTags";
+import SearchBox from "@/components/SearchBox";
 import { offersService } from "@/lib/offers";
 
-const navLinks = [
-  { label: "New Arrivals", to: "/shop?filter=new" },
-  { label: "Best Sellers", to: "/shop?filter=best" },
-  { label: "On Sale", to: "/shop?filter=sale" },
+// "All Products" + Services/About/Reach Us are static. The tag links shown
+// before them are dynamic (admin-controlled in Tags Management, max 3).
+const STATIC_NAV_LINKS = [
   { label: "All Products", to: "/shop" },
   { label: "Services", to: "/services" },
   { label: "About", to: "/about" },
@@ -18,10 +19,16 @@ const navLinks = [
 const Header = () => {
   const { isAuthenticated, isAdmin, user, logout } = useAuth();
   const { count: cartCount } = useCart();
-  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [offers, setOffers] = useState(() => offersService.listEnabled());
+  const navTags = useNavTags();
+  const navLinks = useMemo(
+    () => [
+      ...navTags.map((t) => ({ label: t.name, to: `/shop?tag=${encodeURIComponent(t.name)}` })),
+      ...STATIC_NAV_LINKS,
+    ],
+    [navTags]
+  );
 
   useEffect(() => {
     const sync = () => setOffers(offersService.listEnabled());
@@ -32,13 +39,6 @@ const Header = () => {
       window.removeEventListener("storage", sync);
     };
   }, []);
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/shop?search=${encodeURIComponent(searchQuery)}`);
-    }
-  };
 
   return (
     <header className="sticky top-0 z-40 bg-background border-b border-border">
@@ -69,20 +69,7 @@ const Header = () => {
         </Link>
 
         {/* Search */}
-        <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-lg mx-8">
-          <div className="relative w-full">
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-11 pl-4 pr-12 rounded-lg border border-border bg-muted/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring font-body"
-            />
-            <button type="submit" className="absolute right-1 top-1 h-9 w-10 flex items-center justify-center rounded-md bg-primary text-primary-foreground hover:opacity-90 transition-opacity" aria-label="Search">
-              <Search className="w-4 h-4" />
-            </button>
-          </div>
-        </form>
+        <SearchBox className="hidden md:block flex-1 max-w-lg mx-8" onNavigate={() => setMobileOpen(false)} />
 
         {/* Actions */}
         <div className="flex items-center gap-1 sm:gap-3">
@@ -144,26 +131,58 @@ const Header = () => {
       {/* Mobile menu */}
       {mobileOpen && (
         <div className="md:hidden border-t border-border bg-background animate-fade-in">
-          <form onSubmit={handleSearch} className="p-4">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-11 pl-4 pr-12 rounded-lg border border-border bg-muted/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring font-body"
-              />
-              <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 p-1" aria-label="Search">
-                <Search className="w-5 h-5 text-muted-foreground" />
-              </button>
-            </div>
-          </form>
-          <div className="flex flex-col px-4 pb-4 gap-2">
+          <div className="p-4">
+            <SearchBox onNavigate={() => setMobileOpen(false)} />
+          </div>
+          <div className="flex flex-col px-4 pb-2 gap-2">
             {navLinks.map((link) => (
               <Link key={link.label} to={link.to} onClick={() => setMobileOpen(false)} className="py-2 text-sm font-medium text-foreground hover:text-primary transition-colors">
                 {link.label}
               </Link>
             ))}
+          </div>
+
+          {/* Account section — keeps profile/logout reachable on mobile, where the
+              top-bar user actions are hidden behind the sm: breakpoint. */}
+          <div className="flex flex-col px-4 pb-4 pt-3 gap-1 border-t border-border">
+            {isAuthenticated ? (
+              <>
+                {user?.name && (
+                  <div className="flex items-center gap-2 py-2 text-sm font-semibold text-foreground">
+                    <User className="w-4 h-4" /> {user.name}
+                  </div>
+                )}
+                {isAdmin && (
+                  <Link to="/admin/dashboard" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 py-2 text-sm font-medium text-primary hover:underline">
+                    <LayoutDashboard className="w-4 h-4" /> Dashboard
+                  </Link>
+                )}
+                <Link to="/user/profile" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 py-2 text-sm font-medium text-foreground hover:text-primary transition-colors">
+                  <User className="w-4 h-4" /> My Profile
+                </Link>
+                <Link to="/user/orders" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 py-2 text-sm font-medium text-foreground hover:text-primary transition-colors">
+                  <Package className="w-4 h-4" /> My Orders
+                </Link>
+                <Link to="/user/wishlist" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 py-2 text-sm font-medium text-foreground hover:text-primary transition-colors">
+                  <Heart className="w-4 h-4" /> Wishlist
+                </Link>
+                <button
+                  onClick={() => { setMobileOpen(false); logout(); }}
+                  className="flex items-center gap-2 py-2 text-sm font-medium text-destructive hover:opacity-80 transition-opacity text-left"
+                >
+                  <LogOut className="w-4 h-4" /> Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 py-2 text-sm font-medium text-foreground hover:text-primary transition-colors">
+                  <User className="w-4 h-4" /> Login
+                </Link>
+                <Link to="/register" onClick={() => setMobileOpen(false)} className="py-2 text-sm font-medium text-primary hover:underline">
+                  Create an account
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}
